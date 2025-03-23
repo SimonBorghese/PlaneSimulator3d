@@ -29,3 +29,12 @@ bin/
 .DS_Store
 
 .google_api_key
+/libs/
+/libs/*
+libs/lwjgl-assimp-natives-linux.jar
+libs/lwjgl-glfw-natives-linux.jar
+libs/lwjgl-natives-linux.jar
+libs/lwjgl-openal-natives-linux.jar
+libs/lwjgl-opengl-natives-linux.jar
+libs/lwjgl-release-minimal-opengl-zip.json
+libs/lwjgl-stb-natives-linux.jar

@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 public class Driver {
     public static void main(String[] args){
-        Graphics.Window win = new Graphics.Window(800, 600, 4,3);
+        Graphics.Window win = new Graphics.Window(800, 600, 4,1);
 
         win.init();
 
