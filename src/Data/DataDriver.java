@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import Math.Image;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * This class exposes an API for retrieving data from various online sources in a friendly way
@@ -83,7 +84,13 @@ public class DataDriver {
         try {
             byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
 
-            return decodeImage(jpeg_bytes);
+            ByteBuffer jpg_buffer = MemoryUtil.memAlloc(jpeg_bytes.length);
+
+            for (int i = 0; i < jpeg_bytes.length; i++){
+                jpg_buffer.put(jpeg_bytes[i]);
+            }
+
+            return decodeImage(jpg_buffer);
         } catch (ConfigurationException e) {
             System.out.println("Failed to get satallite image, probably an API key issue!");
             throw new ConfigurationException("API or Session Key misconfiguration!");
@@ -95,22 +102,20 @@ public class DataDriver {
      * @param jpeg_image The bytes for a jpeg (which is preferred) image
      * @return The decoded bytes
      */
-    private byte[] decodeImage(byte[] jpeg_image){
+    private byte[] decodeImage(ByteBuffer jpeg_image){
         // STB writes some data to these values, it can only be provided as a sort of pointer from an array
         int[] x_output = new int[1];
         int[] y_output = new int[1];
         int[] channel_output = new int[1];
 
-        /*
-        * STB doesn't support reading off the Java stack, we must move the JPEG image
-        * into a buffer located on the heap
-         */
-        ByteBuffer buffer = ByteBuffer.allocate(jpeg_image.length);
-        buffer.put(jpeg_image);
-
         // Load the image
-        ByteBuffer image = STBImage.stbi_load_from_memory(buffer,
+        ByteBuffer image = STBImage.stbi_load_from_memory(jpeg_image,
                 x_output, y_output, channel_output, 3);
+
+        if (image == null){
+            // STB actually fails in a safe way, no need for exception
+            System.out.println("Image Load Failed: " + STBImage.stbi_failure_reason());
+        }
 
         // Then we must make another array and copy the buffer into that because image.array() becomes null
         byte[] result_bytes = new byte[x_output[0] * y_output[0] * 3];

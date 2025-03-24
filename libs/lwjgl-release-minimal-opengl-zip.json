@@ -3,7 +3,7 @@
   "mode": "zip",
   "selectedAddons": [],
   "platform": [
-    "macos-arm64"
+    "linux"
   ],
   "descriptions": false,
   "compact": false,

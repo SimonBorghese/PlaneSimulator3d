@@ -11,6 +11,7 @@ import org.lwjgl.*;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GLCapabilities;
 
 /**
@@ -99,6 +100,10 @@ public class Window implements GLFWKeyCallbackI {
 
         // Set up the OpenGL context for the window
         GLFW.glfwMakeContextCurrent(window);
+
+        GL.createCapabilities();
+
+        GL33.glViewport(0,0,width, height);
     }
 
     /**
