@@ -8,11 +8,15 @@ package Data;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.lwjgl.stb.STBImage;
 
 import javax.naming.ConfigurationException;
 import java.io.FileNotFoundException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
+
+import Math.Image;
 
 /**
  * This class exposes an API for retrieving data from various online sources in a friendly way
@@ -30,7 +34,9 @@ public class DataDriver {
         // Construct the internet driver with the default constructor to use the provided API key
         try {
             inetDriver = new InternetDriver();
-        } catch (FileNotFoundException e) {
+
+            inetDriver.initializeTileSession();
+        } catch (ConfigurationException | FileNotFoundException e) {
             throw new ConfigurationException("No API key provided for Google Cloud");
         }
     }
@@ -50,7 +56,7 @@ public class DataDriver {
             HashMap<String, String> rawCoordinates = new HashMap<>();
 
             // Generate out raw coordinates
-            for (int j = 0; j < 512 - (coordinates.size() - 512 * i); j++){
+            for (int j = 0; j < (coordinates.size() - 512 * i); j++){
                 WorldCoordinate coordinate = coordinates.get(j + (512 * i));
 
                 rawCoordinates.put(String.format("%.7f", coordinate.getLatitude()),
@@ -64,6 +70,56 @@ public class DataDriver {
         }
 
         return data;
+    }
+
+    /**
+     * Using a provided coordinate and zoom, return a decoded image of the satallite view
+     * @param coordinate The coordinate of the requested location
+     * @param zoom The zoom at the coord
+     * @return A byte array of a decoded image
+     * @throws ConfigurationException Should the API and Session not properly be configured
+     */
+    public byte[] getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
+        try {
+            byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
+
+            return decodeImage(jpeg_bytes);
+        } catch (ConfigurationException e) {
+            System.out.println("Failed to get satallite image, probably an API key issue!");
+            throw new ConfigurationException("API or Session Key misconfiguration!");
+        }
+    }
+
+    /**
+     * Given a provided, arbitrary image compatible with stb, return a decoded image
+     * @param jpeg_image The bytes for a jpeg (which is preferred) image
+     * @return The decoded bytes
+     */
+    private byte[] decodeImage(byte[] jpeg_image){
+        // STB writes some data to these values, it can only be provided as a sort of pointer from an array
+        int[] x_output = new int[1];
+        int[] y_output = new int[1];
+        int[] channel_output = new int[1];
+
+        /*
+        * STB doesn't support reading off the Java stack, we must move the JPEG image
+        * into a buffer located on the heap
+         */
+        ByteBuffer buffer = ByteBuffer.allocate(jpeg_image.length);
+        buffer.put(jpeg_image);
+
+        // Load the image
+        ByteBuffer image = STBImage.stbi_load_from_memory(buffer,
+                x_output, y_output, channel_output, 3);
+
+        // Then we must make another array and copy the buffer into that because image.array() becomes null
+        byte[] result_bytes = new byte[x_output[0] * y_output[0] * 3];
+        for (int i = 0; i < x_output[0] * y_output[0] * 3; i++){
+            result_bytes[i] = image.get(i);
+        }
+
+        // Return the decoded image
+        return result_bytes;
     }
 
     /**

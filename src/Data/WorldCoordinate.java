@@ -7,6 +7,7 @@
 package Data;
 
 import java.security.InvalidParameterException;
+import Math.Vector;
 
 /**
  * This class provides a representation of coordinates within the World
@@ -41,6 +42,33 @@ public class WorldCoordinate {
     public WorldCoordinate(){
         // Denver Colorado as provided by the Google API example
         this(39.7391536, -104.9847034);
+    }
+
+    /**
+     * Convert this coordinate to a point used for the Tile API
+     * FROM GOOGLE'S DOCS: https://developers.google.com/maps/documentation/tile/2d-tiles-overview
+     * @return A Vector representing the point
+     */
+    public Vector toPoint(double tileSize){
+        double mercator = -Math.log(Math.tan((0.25 + latitude / 360.0) * Math.PI));
+        double x = tileSize * (longitude / 360.0 + 0.5);
+        double y = tileSize / 2 * (1 + mercator / Math.PI);
+        return new Vector(x, y);
+    }
+
+    /**
+     * Convert this coordinate to a tile cord used for the Tile API
+     * FROM GOOGLE'S DOCS: https://developers.google.com/maps/documentation/tile/2d-tiles-overview
+     * @return A Vector representing the tile cord where Z is zoom
+     */
+    public Vector toPoint(double tileSize, double zoom){
+        Vector point = toPoint(tileSize);
+        double scale = Math.pow(2, zoom);
+
+        double x = Math.floor(point.getX() * scale / tileSize);
+        double y = Math.floor(point.getY() * scale / tileSize);
+
+        return new Vector(x, y, zoom);
     }
 
     public double getLatitude() {
