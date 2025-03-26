@@ -52,9 +52,7 @@ public class Driver {
 
         Graphics.GLVertexArray test_mesh = new Graphics.GLVertexArray();
 
-        test_mesh.generateVertexArray();;
-
-        test_mesh.useMesh();
+        test_mesh.bindElementsForUse();
 
         test_mesh.uploadVertices(new float[]{
                 -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
@@ -68,13 +66,13 @@ public class Driver {
 
         Graphics.GLDriver driver = new GLDriver();
 
-        byte[] raw_image = null;
-        int tex = -1;
+        Graphics.GLTexture tex = new Graphics.GLTexture();
+
         try {
-            raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(39.7391536,
+            int[] raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(39.7391536,
                     -104.9847034), 15);
 
-            tex = driver.uploadTexture(raw_image, 256, 256);
+            tex.uploadTexture(raw_image, 128, 128);
 
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
@@ -84,9 +82,10 @@ public class Driver {
             GL33.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
             test_shader.useProgram();
+            tex.bindToUnit(0);
             int loc = test_shader.getUniformLocation("iTex");
 
-            GL33.glUniform1i(loc, tex);
+            GL33.glUniform1i(loc, 0);
             test_mesh.useMesh();
             GL33.glDrawElements(GL33.GL_TRIANGLES, 3, GL33.GL_UNSIGNED_INT, 0);
         }

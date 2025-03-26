@@ -7,6 +7,7 @@
 package Graphics;
 
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.stb.*;
@@ -44,7 +45,13 @@ public class GLDriver {
         int texture = GL33.glGenTextures();
         GL33.glBindTexture(GL33.GL_TEXTURE_2D, texture);
 
-        ByteBuffer buffer = ByteBuffer.wrap(target);
+        // Copy the target to a real buffer
+        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 3);
+
+        for (int b = 0; b < width * height * 3; b++){
+            buffer.put(b, target[b]);
+        }
+
         GL33.glTexImage2D(GL33.GL_TEXTURE_2D, 0, GL33.GL_RGB, width, height, 0, GL33.GL_RGB,
                 GL33.GL_UNSIGNED_BYTE, buffer);
 

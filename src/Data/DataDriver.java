@@ -10,9 +10,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.lwjgl.stb.STBImage;
 
+import javax.imageio.ImageIO;
 import javax.naming.ConfigurationException;
+import java.awt.image.BufferedImage;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.rmi.UnexpectedException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -80,17 +85,16 @@ public class DataDriver {
      * @return A byte array of a decoded image
      * @throws ConfigurationException Should the API and Session not properly be configured
      */
-    public byte[] getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
+    public int[] getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
         try {
-            byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
+            InputStream jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
 
-            ByteBuffer jpg_buffer = MemoryUtil.memAlloc(jpeg_bytes.length);
-
-            for (int i = 0; i < jpeg_bytes.length; i++){
-                jpg_buffer.put(jpeg_bytes[i]);
+            try {
+                return decodeImage(jpeg_bytes);
+            } catch (UnexpectedException e) {
+                System.out.println("Google failed to provide a valid image!");
+                throw new RuntimeException("Google API returned an invalid image!");
             }
-
-            return decodeImage(jpg_buffer);
         } catch (ConfigurationException e) {
             System.out.println("Failed to get satallite image, probably an API key issue!");
             throw new ConfigurationException("API or Session Key misconfiguration!");
@@ -101,30 +105,36 @@ public class DataDriver {
      * Given a provided, arbitrary image compatible with stb, return a decoded image
      * @param jpeg_image The bytes for a jpeg (which is preferred) image
      * @return The decoded bytes
+     * @throws UnexpectedException If the provided image can't be decoded, unexpected because Google should be providing
+     * valid images
      */
-    private byte[] decodeImage(ByteBuffer jpeg_image){
+    private int[] decodeImage(InputStream jpeg_image) throws UnexpectedException {
         // STB writes some data to these values, it can only be provided as a sort of pointer from an array
         int[] x_output = new int[1];
         int[] y_output = new int[1];
         int[] channel_output = new int[1];
 
-        // Load the image
-        ByteBuffer image = STBImage.stbi_load_from_memory(jpeg_image,
-                x_output, y_output, channel_output, 3);
+        try {
+            BufferedImage decoded = ImageIO.read(jpeg_image);
 
-        if (image == null){
-            // STB actually fails in a safe way, no need for exception
-            System.out.println("Image Load Failed: " + STBImage.stbi_failure_reason());
+            int[] raw_rgb = new int[decoded.getWidth() * decoded.getHeight()];
+
+            // Iterate through the image to copy it to buffer
+            // Yes this is slow but we don't need to call this often
+            for (int y = 0; y < decoded.getHeight(); y++){
+                for (int x = 0; x < decoded.getWidth(); x++){
+                    // The default format is ARGB so we extract the values from the int
+                    int rgb_pixel = decoded.getRGB(x,y);
+
+                    raw_rgb[(y * decoded.getWidth()) + x] = rgb_pixel;
+                }
+            }
+
+            return raw_rgb;
+        } catch (IOException e) {
+            System.out.println("FAILED TO DECODE IMAGE!");
+            throw new UnexpectedException("Invalid image!");
         }
-
-        // Then we must make another array and copy the buffer into that because image.array() becomes null
-        byte[] result_bytes = new byte[x_output[0] * y_output[0] * 3];
-        for (int i = 0; i < x_output[0] * y_output[0] * 3; i++){
-            result_bytes[i] = image.get(i);
-        }
-
-        // Return the decoded image
-        return result_bytes;
     }
 
     /**

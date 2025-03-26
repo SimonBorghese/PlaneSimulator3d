@@ -6,7 +6,12 @@
 
 package Graphics;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.system.MemoryUtil;
+
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 /**
  * A class wrapping around Vertex Arrays and provides an interface to use them
@@ -31,20 +36,9 @@ public class GLVertexArray {
      * The constructor shouldn't do anything because we don't know EXACTLY when it executes
      */
     public GLVertexArray(){
-        vao = -1;
-        vbo = -1;
-        ebo = -1;
-    }
-
-    /**
-     * Generate Vertex Array Object then configure the array
-     * The current format is:
-     * vec3 - aPos
-     * vec2 - aTex
-     */
-    public void generateVertexArray(){
-        // Generate the Vertex Array
         vao = GL33.glGenVertexArrays();
+        vbo = GL33.glGenBuffers();
+        ebo = GL33.glGenBuffers();
     }
 
     /**
@@ -52,13 +46,9 @@ public class GLVertexArray {
      * and preferably after uploadVertices and uploadElements
      */
     public void configureVertexArray(){
-        useMesh();
-        GL33.glBindBuffer(GL33.GL_VERTEX_ARRAY, vbo);
-        GL33.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, ebo);
-
         // Configure the vertex pointers
-        GL33.glVertexAttribPointer(0, 3 * 4, GL33.GL_FLOAT, false, 5*4, 0L);
-        GL33.glVertexAttribPointer(1, 2 * 4, GL33.GL_FLOAT, false, 5*4, (3*4));
+        GL33.glVertexAttribPointer(0, 3, GL33.GL_FLOAT, false, 5 * 4,  0L);
+        GL33.glVertexAttribPointer(1, 2, GL33.GL_FLOAT, false, 5 * 4, 0xC);
 
         // Enable said vertex pointers
         GL33.glEnableVertexAttribArray(0);
@@ -71,12 +61,13 @@ public class GLVertexArray {
      * @param vertex_raw An array of raw bytes for these vertices, must be 5x floats per vertex
      */
     public void uploadVertices(float[] vertex_raw){
-        // Generate the Vertex Buffer
-        vbo = GL33.glGenBuffers();
+        // Convert the float array to a float array
+        FloatBuffer fb = MemoryUtil.memAllocFloat(vertex_raw.length);
+
+        fb.put(vertex_raw).flip();
 
         // Bind the buffer then
-        GL33.glBindBuffer(GL33.GL_VERTEX_ARRAY, vbo);
-        GL33.glBufferData(GL33.GL_VERTEX_ARRAY, vertex_raw, GL33.GL_STATIC_DRAW);
+        GL33.glBufferData(GL33.GL_ARRAY_BUFFER, fb, GL33.GL_STATIC_DRAW);
     }
 
     /**
@@ -85,13 +76,22 @@ public class GLVertexArray {
      * @param elements An array of raw bytes for these vertices, must be 5x floats per vertex
      */
     public void uploadElements(int[] elements){
+        // Convert the elemnts to an int array
+        IntBuffer ib = MemoryUtil.memAllocInt(elements.length);
 
-        // Generate the Vertex Buffer
-        ebo = GL33.glGenBuffers();
+        ib.put(elements).flip();
 
         // Bind the buffer then
+        GL33.glBufferData(GL33.GL_ELEMENT_ARRAY_BUFFER, ib, GL33.GL_STATIC_DRAW);
+    }
+
+    /**
+     * Bind the VAO so it can be used for modifications
+     */
+    public void bindElementsForUse(){
+        GL33.glBindVertexArray(vao);
+        GL33.glBindBuffer(GL33.GL_ARRAY_BUFFER, vbo);
         GL33.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, ebo);
-        GL33.glBufferData(GL33.GL_ELEMENT_ARRAY_BUFFER, elements, GL33.GL_STATIC_DRAW);
     }
 
     /**

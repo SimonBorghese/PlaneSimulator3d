@@ -106,7 +106,7 @@ public class InternetDriver {
         jsonQuery.put("language", "en-US");
         // If you're not in the US, I will be sad :(
         jsonQuery.put("region", "US");
-        jsonQuery.put("imageFormat", "jpeg");
+        jsonQuery.put("imageFormat", "png");
 
         String read_session = PostJSONRequest(
                 String.format("https://tile.googleapis.com/v1/createSession?key=%s", google_api_key),
@@ -126,10 +126,10 @@ public class InternetDriver {
             throw new ConfigurationException("The Google Tile API didn't return a valid response");
         }
 
-        if (!json_response.getString("imageFormat").equalsIgnoreCase("jpeg")){
-            System.out.println("The Google Tile API isn't returning JPEGs, please check for API limits!");
+        if (!json_response.getString("imageFormat").equalsIgnoreCase("png")){
+            System.out.println("The Google Tile API isn't returning PNGs, please check for API limits!");
 
-            throw new ConfigurationException("The Google Tile API isn't returning JPEGs");
+            throw new ConfigurationException("The Google Tile API isn't returning PNGs");
         }
     }
 
@@ -139,7 +139,7 @@ public class InternetDriver {
      * @return A byte array from the URL
      * @throws ConfigurationException If the Google API session token doesn't exist
      */
-    public byte[] getSatalliteImage(Vector coords) throws ConfigurationException {
+    public InputStream getSatalliteImage(Vector coords) throws ConfigurationException {
         if (google_api_tile_session == null){
             throw new ConfigurationException("Google Tile API session not initialized!");
         }
@@ -237,7 +237,7 @@ public class InternetDriver {
      * @param targetURL URL to read from
      * @return The request body
      */
-    private byte[] ReadBinaryFromURL(String targetURL){
+    private InputStream ReadBinaryFromURL(String targetURL){
         // Create URL
         URI target_url = null;
         try {
@@ -254,9 +254,9 @@ public class InternetDriver {
                 .build();
 
         // Send the request
-        HttpResponse<byte[]> response = null;
+        HttpResponse<InputStream> response = null;
         try {
-            response = httpClient.send(req, HttpResponse.BodyHandlers.ofByteArray());
+            response = httpClient.send(req, HttpResponse.BodyHandlers.ofInputStream());
         } catch (UncheckedIOException | InterruptedException | IOException e) {
             System.out.println("Failed to read HTTP response");
             throw new RuntimeException(e);
