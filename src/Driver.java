@@ -19,6 +19,7 @@ import java.util.Scanner;
 import Graphics.GLDriver;
 import Math.Vector;
 import Math.Image;
+import Math.Matrix;
 import org.lwjgl.opengl.GL33;
 
 /**
@@ -56,10 +57,10 @@ public class Driver {
         test_mesh.bindElementsForUse();
 
         test_mesh.uploadVertices(new float[]{
-                -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-                1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-                -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+                -1.0f, -1.0f, -3.0f, 0.0f, 0.0f,
+                1.0f, -1.0f, -3.0f, 1.0f, 0.0f,
+                -1.0f, 1.0f, -3.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, -3.0f, 1.0f, 1.0f,
         });
 
         test_mesh.uploadElements(new int[]{0,1,3,3,2,0});
@@ -69,6 +70,8 @@ public class Driver {
         Graphics.GLDriver driver = new GLDriver();
 
         Graphics.GLTexture tex = new Graphics.GLTexture();
+
+        Matrix proj = new Matrix(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
         try {
             Image raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(39.7391536,
@@ -92,8 +95,11 @@ public class Driver {
             test_shader.useProgram();
             tex.bindToUnit(0);
             int loc = test_shader.getUniformLocation("iTex");
+            int proj_loc = test_shader.getUniformLocation("projection");
 
-            GL33.glUniform1i(loc, 0);
+            // Zero is our current texture unit
+            test_shader.setUniformInt(loc, 0);
+            test_shader.setMatrixUniform(proj_loc, proj.getRawMatrix());
             test_mesh.useMesh();
             GL33.glDrawElements(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0);
         }

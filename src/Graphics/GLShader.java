@@ -13,18 +13,18 @@ import java.security.InvalidParameterException;
 /**
  * This class provides an interface for compiling OpenGL shaders to programs and then using them
  */
-public class GLShader {
-    /**
+public class GLShader extends GLObject{
+    /*
      * The shader program, a handle to the OpenGL program created for this object
+     * This should be represented as the handle object
      */
-    private int shader_program;
 
     /**
      * The GLShader constructor shouldn't do anything, it's bad practice since we don't know EXACTLY when its executed
      */
     public GLShader(){
         // -1 should be considered invalid in our application
-        shader_program = -1;
+        handle = -1;
     }
 
     /**
@@ -76,14 +76,14 @@ public class GLShader {
         GL33.glDeleteShader(vertex_id);
         GL33.glDeleteShader(fragment_id);
 
-        shader_program = program;
+        handle = program;
     }
 
     /**
      * Activate the GPU program
      */
     public void useProgram(){
-        GL33.glUseProgram(shader_program);
+        GL33.glUseProgram(handle);
     }
 
     /**
@@ -92,7 +92,29 @@ public class GLShader {
      * @return The shader uniform location
      */
     public int getUniformLocation(String name){
-        return GL33.glGetUniformLocation(shader_program, name);
+        return GL33.glGetUniformLocation(handle, name);
+    }
+
+    /**
+     * Set an integer uniform
+     * @param loc The uniform location
+     * @param param The integer to set
+     */
+    public void setUniformInt(int loc, int param){
+        GL33.glUniform1i(loc, param);
+    }
+
+    /**
+     * Set a mat4x4 uniform
+     * @param loc The uniform location
+     * @param param The integer to set
+     * @throws InvalidParameterException If the parameter isn't an array atleast 16 floats long
+     */
+    public void setMatrixUniform(int loc, float[] param){
+        if (param.length < 16){
+            throw new InvalidParameterException("Provided matrix is less than 4x4");
+        }
+        GL33.glUniformMatrix4fv(loc, false, param);
     }
 
     /**
@@ -162,4 +184,11 @@ public class GLShader {
     }
 
 
+    /**
+     * Destroy this shader object
+     */
+    @Override
+    void destroy() {
+        GL33.glDeleteProgram(handle);
+    }
 }

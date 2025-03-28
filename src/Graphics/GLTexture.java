@@ -17,18 +17,17 @@ import java.security.InvalidParameterException;
 /**
  * This class provides an interface for creating, binding, and managing OpenGL Textures
  */
-public class GLTexture {
-    /**
-     * The OpenGL handle for the target texture
+public class GLTexture extends GLObject{
+    /*
+     * The handle int should represent the texture object
      */
-    private int texture;
 
     /**
      * The constructor just creates the texture handle, uploading comes later
      */
     public GLTexture(){
         // Generate a texture handle
-        texture = GL33.glGenTextures();
+        handle = GL33.glGenTextures();
     }
 
     /**
@@ -51,7 +50,7 @@ public class GLTexture {
         glHeap.put(data).flip();
 
         // Bind the texture to the 2D unit
-        GL33.glBindTexture(GL33.GL_TEXTURE_2D, texture);
+        GL33.glBindTexture(GL33.GL_TEXTURE_2D, handle);
 
         GL33.glPixelStorei(GL33.GL_TEXTURE_2D, 1);
 
@@ -81,7 +80,14 @@ public class GLTexture {
             throw new InvalidParameterException("Provided Texture unit less than 0");
         }
         GL33.glActiveTexture(GL33.GL_TEXTURE0 + unit);
-        GL33.glBindTexture(GL33.GL_TEXTURE_2D, texture);
+        GL33.glBindTexture(GL33.GL_TEXTURE_2D, handle);
     }
 
+    /**
+     * Destroy the texture object
+     */
+    @Override
+    void destroy() {
+        GL33.glDeleteTextures(handle);
+    }
 }

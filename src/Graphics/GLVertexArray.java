@@ -16,11 +16,10 @@ import java.nio.IntBuffer;
 /**
  * A class wrapping around Vertex Arrays and provides an interface to use them
  */
-public class GLVertexArray {
-    /**
-     * The VAO handle, this handle holds the vertex array buffer and element buffer
+public class GLVertexArray extends GLObject{
+    /*
+     * The handle int should represent the VAO object
      */
-    private int vao;
 
     /**
      * The VBO handle, this handle holds the vertex buffer, the raw vertices sent to the GPU
@@ -36,7 +35,7 @@ public class GLVertexArray {
      * The constructor shouldn't do anything because we don't know EXACTLY when it executes
      */
     public GLVertexArray(){
-        vao = GL33.glGenVertexArrays();
+        handle = GL33.glGenVertexArrays();
         vbo = GL33.glGenBuffers();
         ebo = GL33.glGenBuffers();
     }
@@ -89,7 +88,7 @@ public class GLVertexArray {
      * Bind the VAO so it can be used for modifications
      */
     public void bindElementsForUse(){
-        GL33.glBindVertexArray(vao);
+        GL33.glBindVertexArray(handle);
         GL33.glBindBuffer(GL33.GL_ARRAY_BUFFER, vbo);
         GL33.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, ebo);
     }
@@ -98,6 +97,14 @@ public class GLVertexArray {
      * Bind the VAO so it can be used
      */
     public void useMesh(){
-        GL33.glBindVertexArray(vao);
+        GL33.glBindVertexArray(handle);
+    }
+
+    /**
+     * Destroy the Vertex Array object
+     */
+    @Override
+    void destroy() {
+        GL33.glDeleteVertexArrays(handle);
     }
 }
