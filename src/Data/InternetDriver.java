@@ -139,7 +139,7 @@ public class InternetDriver {
      * @return A byte array from the URL
      * @throws ConfigurationException If the Google API session token doesn't exist
      */
-    public InputStream getSatalliteImage(Vector coords) throws ConfigurationException {
+    public byte[] getSatalliteImage(Vector coords) throws ConfigurationException {
         if (google_api_tile_session == null){
             throw new ConfigurationException("Google Tile API session not initialized!");
         }
@@ -237,7 +237,7 @@ public class InternetDriver {
      * @param targetURL URL to read from
      * @return The request body
      */
-    private InputStream ReadBinaryFromURL(String targetURL){
+    private byte[] ReadBinaryFromURL(String targetURL){
         // Create URL
         URI target_url = null;
         try {
@@ -257,12 +257,11 @@ public class InternetDriver {
         HttpResponse<InputStream> response = null;
         try {
             response = httpClient.send(req, HttpResponse.BodyHandlers.ofInputStream());
+            return response.body().readAllBytes();
         } catch (UncheckedIOException | InterruptedException | IOException e) {
             System.out.println("Failed to read HTTP response");
             throw new RuntimeException(e);
         }
-
-        return response.body();
     }
 
     /**

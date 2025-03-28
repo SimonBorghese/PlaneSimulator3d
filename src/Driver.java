@@ -18,6 +18,7 @@ import java.util.Scanner;
 
 import Graphics.GLDriver;
 import Math.Vector;
+import Math.Image;
 import org.lwjgl.opengl.GL33;
 
 /**
@@ -57,10 +58,11 @@ public class Driver {
         test_mesh.uploadVertices(new float[]{
                 -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
                 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.5f, 1.0f
+                -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
         });
 
-        test_mesh.uploadElements(new int[]{0,1,2});
+        test_mesh.uploadElements(new int[]{0,1,3,3,2,0});
 
         test_mesh.configureVertexArray();
 
@@ -69,10 +71,16 @@ public class Driver {
         Graphics.GLTexture tex = new Graphics.GLTexture();
 
         try {
-            int[] raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(39.7391536,
+            Image raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(39.7391536,
                     -104.9847034), 15);
 
-            tex.uploadTexture(raw_image, 128, 128);
+            byte[] internal_result = new byte[raw_image.getWidth() * raw_image.getHeight() * 3];
+
+            for (int i = 0; i < raw_image.getWidth() * raw_image.getHeight() * 3; i++) {
+                internal_result[i] = raw_image.getData().get(i);
+            }
+
+            tex.uploadTexture(internal_result, raw_image.getWidth(), raw_image.getHeight());
 
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
@@ -87,7 +95,7 @@ public class Driver {
 
             GL33.glUniform1i(loc, 0);
             test_mesh.useMesh();
-            GL33.glDrawElements(GL33.GL_TRIANGLES, 3, GL33.GL_UNSIGNED_INT, 0);
+            GL33.glDrawElements(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0);
         }
 
         win.destroy();

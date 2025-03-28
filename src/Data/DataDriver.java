@@ -85,9 +85,9 @@ public class DataDriver {
      * @return A byte array of a decoded image
      * @throws ConfigurationException Should the API and Session not properly be configured
      */
-    public int[] getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
+    public Image getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
         try {
-            InputStream jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
+            byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
 
             try {
                 return decodeImage(jpeg_bytes);
@@ -108,30 +108,33 @@ public class DataDriver {
      * @throws UnexpectedException If the provided image can't be decoded, unexpected because Google should be providing
      * valid images
      */
-    private int[] decodeImage(InputStream jpeg_image) throws UnexpectedException {
+    private Image decodeImage(byte[] jpeg_image) throws UnexpectedException {
         // STB writes some data to these values, it can only be provided as a sort of pointer from an array
         int[] x_output = new int[1];
         int[] y_output = new int[1];
         int[] channel_output = new int[1];
 
         try {
-            BufferedImage decoded = ImageIO.read(jpeg_image);
+            ByteBuffer img_buffer = MemoryUtil.memAlloc(jpeg_image.length);
 
-            int[] raw_rgb = new int[decoded.getWidth() * decoded.getHeight()];
+            img_buffer.put(jpeg_image).flip();
 
-            // Iterate through the image to copy it to buffer
-            // Yes this is slow but we don't need to call this often
-            for (int y = 0; y < decoded.getHeight(); y++){
-                for (int x = 0; x < decoded.getWidth(); x++){
-                    // The default format is ARGB so we extract the values from the int
-                    int rgb_pixel = decoded.getRGB(x,y);
+            ByteBuffer decoded = STBImage.stbi_load_from_memory(img_buffer, x_output, y_output, channel_output,
+                    3);
 
-                    raw_rgb[(y * decoded.getWidth()) + x] = rgb_pixel;
-                }
+            if (decoded == null){
+                throw new UnexpectedException("Image failed to decode!");
             }
 
-            return raw_rgb;
+            byte[] result_buffer = new byte[x_output[0] * y_output[0] * 3];
+
+            for (int i = 0; i < result_buffer.length; i++){
+                result_buffer[i] = (byte) decoded.get();
+            }
+
+            return new Image(x_output[0], y_output[0], 3, 3, result_buffer);
         } catch (IOException e) {
+            e.printStackTrace();
             System.out.println("FAILED TO DECODE IMAGE!");
             throw new UnexpectedException("Invalid image!");
         }

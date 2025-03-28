@@ -39,14 +39,14 @@ public class GLTexture {
      * @param height Height of the input texture
      * @throws java.security.InvalidParameterException If the data parameter isn't equal to width * height * 3
      */
-    public void uploadTexture(int[] data, int width, int height) throws InvalidParameterException {
+    public void uploadTexture(byte[] data, int width, int height) throws InvalidParameterException {
         if (data.length < width * height * 3){
             System.out.println("Data length is too short, continuing would result in a segFault");
             throw new InvalidParameterException("Provided Texture data is less than width * height * 3");
         }
 
         // We MUST copy the data from the java heap to a heap OpenGL can access
-        IntBuffer glHeap = MemoryUtil.memAllocInt(data.length);
+        ByteBuffer glHeap = MemoryUtil.memAlloc(data.length);
 
         glHeap.put(data).flip();
 
@@ -57,7 +57,7 @@ public class GLTexture {
 
         // Upload the texture
         GL33.glTexImage2D(GL33.GL_TEXTURE_2D,
-                0, GL33.GL_RGBA, width, height, 0, GL33.GL_RGBA, GL33.GL_UNSIGNED_BYTE, glHeap);
+                0, GL33.GL_RGB, width, height, 0, GL33.GL_RGB, GL33.GL_UNSIGNED_BYTE, glHeap);
 
         GL33.glTexParameteri(GL33.GL_TEXTURE_2D, GL33.GL_TEXTURE_WRAP_S, GL33.GL_REPEAT);
         GL33.glTexParameteri(GL33.GL_TEXTURE_2D, GL33.GL_TEXTURE_WRAP_T, GL33.GL_REPEAT);

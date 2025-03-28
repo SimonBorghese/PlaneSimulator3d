@@ -89,7 +89,7 @@ public class Image {
      */
     public Image(int width, int height, int channels, int bpp, ArrayList<Byte> data) {
         /**
-         * TODO!
+         * TODO! PROBABLY NOT USED IN THIS APP
          */
     }
 
@@ -149,5 +149,12 @@ public class Image {
         return width * height;
     }
 
+    /**
+     * Get the internally stored data
+     * @return An arraylist of bytes
+     */
+    public ArrayList<Byte> getData(){
+        return pixels;
+    }
 
 }
