@@ -9,6 +9,12 @@ package Math;
 import java.security.InvalidParameterException;
 import java.util.Arrays;
 
+// I dunno why
+import glm_.*;
+import glm_.mat4x4.Mat4;
+import glm_.quat.Quat;
+import glm_.vec3.Vec3;
+
 /**
  * This class provides an object for a 4x4 floating point matrix for OpenGL 3d graphics calculations
  * It MUST be stored as a linear structure to remain compatible with OpenGL
@@ -19,7 +25,7 @@ public class Matrix {
     /**
      * A linear structure to represent the matrix, should be 4*4 in size (but not 4x4 in 2d)
      */
-    private float[] matrix;
+    private Mat4 matrix;
 
     /**
      * Construct a matrix with following a matrix identity
@@ -38,12 +44,12 @@ public class Matrix {
                   float b1, float b2, float b3, float b4,
                   float c1, float c2, float c3, float c4,
                   float d1, float d2, float d3, float d4){
-        matrix = new float[]{
+        matrix = new Mat4(new float[]{
                 a1, a2, a3, a4,
                 b1, b2, b3, b4,
                 c1, c2, c3, c4,
                 d1, d2, d3, d4
-        };
+        });
     }
 
     /**
@@ -57,7 +63,7 @@ public class Matrix {
         if (row < 0 || column < 0 || row > 3 || column > 3){
             throw new InvalidParameterException("Either row or column at invalid position");
         }
-        return matrix[(row * 4) + column];
+        return matrix.get(row, column);
     }
 
     /**
@@ -74,17 +80,7 @@ public class Matrix {
      */
     public Matrix(float fov, float apsect, float near, float far){
         // Construct an identity matrix
-        this();
-
-        // These calculations come from the GLM function listed above
-        // It's all simple linear algebra, I don't understand it at all
-        float tanHalfFov = (float) Math.tan(fov / 2.0f);
-
-        matrix[0] = 1.0f / (apsect * tanHalfFov);
-        matrix[5] = 1.0f / tanHalfFov;
-        matrix[10] = far / (near - far);
-        matrix[11] = -1.0f;
-        matrix[14] = -(far * near) / (far - near);
+        matrix = glm.INSTANCE.perspective(fov, apsect, near, far);
     }
 
     /**
@@ -97,7 +93,7 @@ public class Matrix {
         if (row < 0 || row > 3){
             throw new InvalidParameterException("Row at invalid position");
         }
-        return Arrays.copyOfRange(matrix, (row * 4), (row * 4) + 4);
+        return matrix.get(row).getArray();
     }
 
     /**
@@ -105,7 +101,24 @@ public class Matrix {
      * @return Matrix array AS A COPY
      */
     public float[] getRawMatrix(){
-        return matrix.clone();
+        return matrix.getArray();
+    }
+
+    /**
+     * Translate the matrix by a vec3
+     * @param pos The vector to translate the matrix by
+     */
+    public void translate(float[] pos){
+        matrix = matrix.translate(new Vec3(pos[0], pos[1], pos[2]));
+    }
+
+    /**
+     * Rotate the matrix by eular angles
+     * X: Pitch Y: Yaw Z: Roll
+     * @param rot The 3 eular angles
+     */
+    public void rotate(float[] rot){
+        matrix = matrix.rotateXYZ(rot[0], rot[1], rot[2]);
     }
 
 
