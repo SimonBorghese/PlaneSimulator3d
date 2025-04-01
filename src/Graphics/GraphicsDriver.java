@@ -21,6 +21,11 @@ public class GraphicsDriver {
     private int opengl_minor;
 
     /**
+     * The window for the use with this driver
+     */
+    private Window window;
+
+    /**
      * The constructor for the graphics driver. We only need one of these
      * This doesn't create any unsafe objects but rather sets parameters.
      * Although any OpenGL version newer than 3.3 is supported and may desire for maintenance fixes defined in newer
@@ -37,5 +42,7 @@ public class GraphicsDriver {
 
         this.opengl_major = opengl_major;
         this.opengl_minor = opengl_minor;
+
+        window = new Window(width, height, opengl_major, opengl_minor);
     }
 }

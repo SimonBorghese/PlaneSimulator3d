@@ -107,8 +107,12 @@ public class Matrix {
     /**
      * Translate the matrix by a vec3
      * @param pos The vector to translate the matrix by
+     * @throws InvalidParameterException If the provided array isn't 3 floats long
      */
     public void translate(float[] pos){
+        if (pos.length != 3){
+            throw new InvalidParameterException("Vector is not 3 floats long");
+        }
         matrix = matrix.translate(new Vec3(pos[0], pos[1], pos[2]));
     }
 
@@ -116,9 +120,25 @@ public class Matrix {
      * Rotate the matrix by eular angles
      * X: Pitch Y: Yaw Z: Roll
      * @param rot The 3 eular angles
+     * @throws InvalidParameterException If the provided array isn't 3 floats long
      */
     public void rotate(float[] rot){
+        if (rot.length != 3){
+            throw new InvalidParameterException("Vector is not 3 floats long");
+        }
         matrix = matrix.rotateXYZ(rot[0], rot[1], rot[2]);
+    }
+
+    /**
+     * Scale the matrix by a vec3
+     * @param scale The vector to scale by
+     * @throws InvalidParameterException If the provided array isn't 3 floats long
+     */
+    public void scale(float[] scale){
+        if (scale.length != 3){
+            throw new InvalidParameterException("Vector is not 3 floats long");
+        }
+        matrix = matrix.scale(new Vec3(scale[0], scale[1], scale[2]));
     }
 
 

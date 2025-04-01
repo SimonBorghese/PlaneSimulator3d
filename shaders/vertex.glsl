@@ -11,11 +11,14 @@ out vec2 oTex;
 // Our perspective matrix
 uniform mat4 projection;
 
+// Our model matrix
+uniform mat4 model;
+
 // Main function
 void main(){
     // Assign the output var to the input var
     oTex = aTex;
 
     // Define the vertex as the input position with a W of 1.0
-    gl_Position = projection * vec4(aPos, 1.0);
+    gl_Position = projection * model * vec4(aPos, 1.0);
 }
