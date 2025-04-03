@@ -104,7 +104,7 @@ public class GLVertexArray extends GLObject{
      * Destroy the Vertex Array object
      */
     @Override
-    void destroy() {
+    public void destroy() {
         GL33.glDeleteVertexArrays(handle);
     }
 }

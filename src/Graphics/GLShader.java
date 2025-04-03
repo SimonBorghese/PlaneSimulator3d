@@ -188,7 +188,7 @@ public class GLShader extends GLObject{
      * Destroy this shader object
      */
     @Override
-    void destroy() {
+    public void destroy() {
         GL33.glDeleteProgram(handle);
     }
 }

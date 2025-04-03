@@ -17,5 +17,5 @@ public abstract class GLObject {
     /**
      * Destroy this OpenGL object, this method WILL result in the object being inoperable after executing
      */
-    abstract void destroy();
+    public abstract void destroy();
 }

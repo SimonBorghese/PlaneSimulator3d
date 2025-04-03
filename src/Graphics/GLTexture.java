@@ -87,7 +87,7 @@ public class GLTexture extends GLObject{
      * Destroy the texture object
      */
     @Override
-    void destroy() {
+    public void destroy() {
         GL33.glDeleteTextures(handle);
     }
 }

@@ -6,6 +6,13 @@
 
 package Graphics;
 
+import Utils.GraphicsStack;
+import org.lwjgl.opengl.GL33;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 /**
  * This is the primary API for the graphics side, this should expose the functions for
  * creating 3d graphics and then integrating them with swing. We shouldn't touch any LWJGL libraries here but in other
@@ -26,6 +33,16 @@ public class GraphicsDriver {
     private Window window;
 
     /**
+     * The graphics stack which hold our objects
+     */
+    private GraphicsStack stack;
+
+    /**
+     * The primary shader for rendering textured objects
+     */
+    private GLShader main_shader;
+
+    /**
      * The constructor for the graphics driver. We only need one of these
      * This doesn't create any unsafe objects but rather sets parameters.
      * Although any OpenGL version newer than 3.3 is supported and may desire for maintenance fixes defined in newer
@@ -44,5 +61,54 @@ public class GraphicsDriver {
         this.opengl_minor = opengl_minor;
 
         window = new Window(width, height, opengl_major, opengl_minor);
+
+        // Create a stack for our objects
+        stack = new GraphicsStack();
+    }
+
+    /**
+     * Initialize the graphics driver, this calls to several private methods to initialize the window, shaders,
+     * and any other subsystems that need to be created
+     */
+    public void init(){
+        // Initialize the window before doing anything
+        window.init();
+
+        // Create empty objects for our needed fundamental objects
+        main_shader = new GLShader();
+
+        // Create them
+        try {
+            main_shader.createProgram(Files.readString(Paths.get("shaders/vertex.glsl")),
+                    Files.readString(Paths.get("shaders/fragment.glsl")));
+        } catch (IOException e) {
+            throw new RuntimeException("Shaders not found, working directory likely incorrect!");
+        }
+
+        // And then push it to the graphics stack
+        stack.push(main_shader);
+    }
+
+    /**
+     * Loop the window, return whether or not this should continue
+     * @return True if the driver should continue the loop
+     */
+    public boolean loop(){
+        GL33.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
+
+        return window.loop();
+    }
+
+    /**
+     * Destroy any remaining graphics objects, then the window
+     * This makes this object completely invalid after this
+     */
+    public void destroy(){
+        while (stack.hasElements()){
+            stack.pop();
+        }
+
+        window.destroy();
     }
 }

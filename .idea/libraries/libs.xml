@@ -1,34 +1,13 @@
 <component name="libraryTable">
   <library name="libs">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-assimp-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/glm-0.9.9.1-11-all.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-openal.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-glfw.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-assimp-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-natives-linux.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-stb.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-glfw-natives-linux.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-opengl.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-stb-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-assimp.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-glfw-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-openal-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-openal-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-glfw-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-stb-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-stb-natives-linux.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-opengl-javadoc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/json-20250107.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-openal-natives-linux.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-opengl-sources.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-assimp-natives-linux.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl.jar!/" />
-      <root url="jar://$PROJECT_DIR$/libs/lwjgl-opengl-natives-linux.jar!/" />
+      <root url="file://$PROJECT_DIR$/libs" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/libs" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/libs" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/libs" recursive="false" type="SOURCES" />
   </library>
 </component>

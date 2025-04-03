@@ -38,3 +38,6 @@ libs/lwjgl-openal-natives-linux.jar
 libs/lwjgl-opengl-natives-linux.jar
 libs/lwjgl-release-minimal-opengl-zip.json
 libs/lwjgl-stb-natives-linux.jar
+.idea/libraries/libs.xml
+.idea/workspace.xml
+/.idea

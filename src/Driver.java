@@ -1,24 +1,4 @@
-import Data.DataDriver;
-import Data.WorldCoordinate;
-
-import javax.imageio.ImageIO;
-import javax.naming.ConfigurationException;
-import javax.swing.*;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.WritableRaster;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import Math.Vector;
-import Math.Image;
-import Math.Matrix;
-import org.lwjgl.opengl.GL33;
+import Graphics.GraphicsDriver;
 
 /**
  * PlaneSimulator3d
@@ -30,6 +10,16 @@ import org.lwjgl.opengl.GL33;
 
 public class Driver {
     public static void main(String[] args){
+
+        GraphicsDriver gDriver = new GraphicsDriver(800,600,4,1);
+        gDriver.init();
+
+        while (gDriver.loop()){
+
+        }
+
+        gDriver.destroy();
+        /**
         Graphics.Window win = new Graphics.Window(800, 600, 4,1);
 
         Data.DataDriver dataDriver = null;
@@ -131,6 +121,7 @@ public class Driver {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+         */
 
     }
 }
