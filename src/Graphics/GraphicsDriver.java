@@ -90,12 +90,20 @@ public class GraphicsDriver {
     }
 
     /**
-     * Loop the window, return whether or not this should continue
+     * This method handles rendering in the graphics driver
+     */
+    private void render(){
+        GL33.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+        GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
+    }
+
+    /**
+     * Loop the window, return whether this should continue
      * @return True if the driver should continue the loop
      */
     public boolean loop(){
-        GL33.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
+        // Render out the scene
+        render();
 
         return window.loop();
     }
