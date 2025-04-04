@@ -11,6 +11,9 @@ out vec2 oTex;
 // Our perspective matrix
 uniform mat4 projection;
 
+// Our view matrix
+uniform mat4 view;
+
 // Our model matrix
 uniform mat4 model;
 

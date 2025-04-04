@@ -3,8 +3,10 @@ package Utils;
 
 import Graphics.GLObject;
 import Utils.Stack.GraphicsNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.security.InvalidParameterException;
+import java.util.Iterator;
 
 /**
  * In this program, we use unsafe OpenGL bindings. Java doesn't do garbage collection for the OpenGL objects but rather
@@ -17,7 +19,7 @@ import java.security.InvalidParameterException;
  * This is implemented using the GraphicsNode object which are LinkedNodes
  * To keep O(1) operation, alternate between push and pop, otherwise top will need to be rebuilt
  */
-public class GraphicsStack {
+public class GraphicsStack implements Iterable<GraphicsNode> {
     /**
      * This is the first node of our stack, may be null
      */
@@ -211,4 +213,20 @@ public class GraphicsStack {
     public boolean needsRebuild(){
         return (top == null && before_top == null) && root != null;
     }
+
+    /**
+     * Return the root of the stack for iteration. Guaranteed to go from the bottom of the stack to the top.
+     * @return The root of the stack as an iterator
+     * @throws IllegalStateException If there is no root
+     */
+    @NotNull
+    @Override
+    public Iterator<GraphicsNode> iterator() {
+        if (!hasElements()){
+            throw new IllegalStateException("The stack is empty!");
+        }
+        return root;
+    }
+
+
 }

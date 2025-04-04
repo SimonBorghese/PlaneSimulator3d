@@ -200,5 +200,8 @@ public class GLShader extends GLObject{
     @Override
     public void use(GraphicsContext context) {
         GL33.glUseProgram(handle);
+
+        // Set ourselves in the context
+        context.setShader(this);
     }
 }

@@ -6,6 +6,8 @@
 
 package Math;
 
+import glm_.glm;
+
 /**
  * A class representing a 3D Vector
  */
@@ -113,5 +115,24 @@ public class Vector {
      */
     public void setZ(double z) {
         this.z = z;
+    }
+
+    /**
+     * Normalize this vector
+     */
+    public void normalize(){
+        double length = Math.sqrt(x*x + y*y + z*z);
+
+        x /= length;
+        y /= length;
+        z /= length;
+    }
+
+    /**
+     * Convert this vector to a glm vector
+     * @return A GLM vector that copied this vector
+     */
+    public glm_.vec3.Vec3 toGLM(){
+        return new glm_.vec3.Vec3(x, y, z);
     }
 }

@@ -130,5 +130,8 @@ public class GLVertexArray extends GLObject{
 
         useMesh();
         GL33.glDrawElements(GL33.GL_TRIANGLES, num_elements, GL33.GL_UNSIGNED_INT, 0);
+
+        // Set ourselves to the context
+        context.setMesh(this);
     }
 }

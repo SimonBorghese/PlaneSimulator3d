@@ -7,11 +7,13 @@
 package Graphics;
 
 import Utils.GraphicsStack;
+import Utils.Stack.GraphicsNode;
 import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Iterator;
 
 /**
  * This is the primary API for the graphics side, this should expose the functions for
@@ -77,6 +79,21 @@ public class GraphicsDriver {
     }
 
     /**
+     * Add a GLCamera to the stack. This is restricted to GLCamera as external objects
+     * shouldn't be adding anything else to the stack.
+     * @param camera The GLCamera to add to the stack
+     * @throws NullPointerException If the provided camera is null
+     */
+    public void addCamera(GLCamera camera){
+        if (camera == null){
+            throw new NullPointerException("Provided Camera to stack is null!");
+        }
+
+        stack.push(camera);
+    }
+
+
+    /**
      * Initialize the graphics driver, this calls to several private methods to initialize the window, shaders,
      * and any other subsystems that need to be created
      */
@@ -105,6 +122,26 @@ public class GraphicsDriver {
     private void render(){
         GL33.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
         GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
+
+        // Create a graphics context to then populate while going up the stack
+        // We create a new context every time we go through the stack
+        GraphicsContext ctx = new GraphicsContext();
+        // Go up the stack and use all objects
+        // It's important to follow the order of the stack such that dependencies are met
+        for (GraphicsNode node : stack){
+            node.getElement().use(ctx);
+        }
+    }
+
+    /**
+     * Adds a texture to the stack, the programmer provides the raw image data which is then decoded and turned
+     * into a GLTexture which is then pushed to the stack. The programmer has no context of how the texture
+     * actually works, all the programmer must take care of is ensuring correct order of pushing data
+     * @param data The PNG or JPG of the image we're loading from
+     * @throws java.security.InvalidParameterException If the image provided fails to decode
+     */
+    public void pushTexture(Byte[] data){
+
     }
 
     /**

@@ -3,12 +3,13 @@ package Utils.Stack;
 import Graphics.GLObject;
 
 import java.security.InvalidParameterException;
+import java.util.Iterator;
 
 /**
  * This is the node object which will be used for our linked list implementation, though this one is special because
  * it only takes GLObject
  */
-public class GraphicsNode {
+public class GraphicsNode implements Iterator<GraphicsNode> {
     /**
      * The GLObject this node points to
      */

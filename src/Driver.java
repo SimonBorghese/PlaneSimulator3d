@@ -1,3 +1,4 @@
+import Graphics.GLCamera;
 import Graphics.GraphicsDriver;
 
 /**
@@ -13,6 +14,11 @@ public class Driver {
 
         GraphicsDriver gDriver = new GraphicsDriver(800,600,4,1);
         gDriver.init();
+
+        GLCamera newCamera = new GLCamera(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+
+        // Add our camera to the driver
+        gDriver.addCamera(newCamera);
 
         while (gDriver.loop()){
 

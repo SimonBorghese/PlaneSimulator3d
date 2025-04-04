@@ -110,5 +110,8 @@ public class GLTexture extends GLObject{
 
         // Bind our unit to the shader
         context.getShader().setUniformInt(location, 0);
+
+        // Set ourselves to the context
+        context.setTexture(this);
     }
 }

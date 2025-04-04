@@ -80,7 +80,21 @@ public class Matrix {
      */
     public Matrix(float fov, float apsect, float near, float far){
         // Construct an identity matrix
-        matrix = glm.INSTANCE.perspective(fov, apsect, near, far);
+        matrix = glm.INSTANCE.perspective(glm.INSTANCE.radians(fov), apsect, near, far);
+    }
+
+    /**
+     * Construct a matrix based on view, a "view" matrix transforms relative to a camera
+     * @param position The position of the camera
+     * @param look_at The "look at" position for this camera
+     * @param up The up vector, usually +y
+     */
+    public Matrix(Vector position, Vector look_at, Vector up){
+        matrix = glm.INSTANCE.lookAt(
+                position.toGLM(),
+                look_at.toGLM(),
+                up.toGLM()
+        );
     }
 
     /**
