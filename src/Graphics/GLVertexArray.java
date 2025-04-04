@@ -12,6 +12,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.security.InvalidParameterException;
 
 /**
  * A class wrapping around Vertex Arrays and provides an interface to use them
@@ -30,6 +31,11 @@ public class GLVertexArray extends GLObject{
      * The EBO handle, this handle holds the element array, the array of indices for this array
      */
     private int ebo;
+
+    /**
+     * The number of elements in this Vertex Array, useful for use() which treats this like a mesh
+     */
+    private int num_elements;
 
     /**
      * The constructor shouldn't do anything because we don't know EXACTLY when it executes
@@ -82,6 +88,8 @@ public class GLVertexArray extends GLObject{
 
         // Bind the buffer then
         GL33.glBufferData(GL33.GL_ELEMENT_ARRAY_BUFFER, ib, GL33.GL_STATIC_DRAW);
+
+        num_elements = elements.length;
     }
 
     /**
@@ -106,5 +114,21 @@ public class GLVertexArray extends GLObject{
     @Override
     public void destroy() {
         GL33.glDeleteVertexArrays(handle);
+    }
+
+    /**
+     * This method will bind the vertex array and draw all the elements within it. This doesn't directly
+     * depend on the context however a shader and texture should still be set.
+     * @param context A context of the currently bound objects is provided to assist in preparing and execution
+     * @throws java.security.InvalidParameterException If the context shows no shader
+     */
+    @Override
+    public void use(GraphicsContext context) {
+        if (!context.hasShader()){
+            throw new InvalidParameterException("A meshes attempted render without a bound shader!");
+        }
+
+        useMesh();
+        GL33.glDrawElements(GL33.GL_TRIANGLES, num_elements, GL33.GL_UNSIGNED_INT, 0);
     }
 }

@@ -90,4 +90,25 @@ public class GLTexture extends GLObject{
     public void destroy() {
         GL33.glDeleteTextures(handle);
     }
+
+    /**
+     * This method binds a texture to a texture unit then sets the sampler for the currently bound shader
+     * @param context A context of the currently bound objects is provided to assist in preparing and execution
+     * @throws InvalidParameterException If there is no shader bound right now
+     */
+    @Override
+    public void use(GraphicsContext context) {
+        // Bind our texture to unit 0
+        bindToUnit(0);
+
+        if (!context.hasShader()){
+            throw new InvalidParameterException("Texture use() provided with a context without shader!");
+        }
+
+        // Get the location to bind to, we assume the shader has an iTex uniform
+        int location = context.getShader().getUniformLocation("iTex");
+
+        // Bind our unit to the shader
+        context.getShader().setUniformInt(location, 0);
+    }
 }

@@ -191,4 +191,14 @@ public class GLShader extends GLObject{
     public void destroy() {
         GL33.glDeleteProgram(handle);
     }
+
+    /**
+     * Use this shader. We ignore context because any context is effectively destroyed when a new shader is bound.
+     * This method binds the currently existing program
+     * @param context A context of the currently bound objects is provided to assist in preparing and execution
+     */
+    @Override
+    public void use(GraphicsContext context) {
+        GL33.glUseProgram(handle);
+    }
 }

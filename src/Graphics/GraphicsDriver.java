@@ -33,7 +33,17 @@ public class GraphicsDriver {
     private Window window;
 
     /**
-     * The graphics stack which hold our objects
+     * The graphics stack which hold our objects. Here is how this stack shal be used:
+     * Each OpenGL object has a sort of "use" function and within this stack we store the order to use objects
+     * At the bottom of the stack we store shaders as they need to be activated before doing anything
+     * Next, we store groups of textures and meshes (otherwise known as vertex arrays). After binding a shader
+     * the loop will mostly look like:
+     * Activate Texture
+     * Bind texture to currently bound shader
+     * Bind Vertex Array
+     * Draw Vertex Array
+     * The various objects will be aware of the other objects bound via the GraphicsContext object sent to
+     * every use function.
      */
     private GraphicsStack stack;
 
