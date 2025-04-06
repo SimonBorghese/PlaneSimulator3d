@@ -11,9 +11,13 @@ import Utils.Stack.GraphicsNode;
 import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
+
+import Math.Image;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * This is the primary API for the graphics side, this should expose the functions for
@@ -114,22 +118,31 @@ public class GraphicsDriver {
 
         // And then push it to the graphics stack
         stack.push(main_shader);
+
+        // Enable the depth buffer
+        GL33.glEnable(GL33.GL_DEPTH_TEST);
     }
 
     /**
      * This method handles rendering in the graphics driver
      */
     private void render(){
-        GL33.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        GL33.glClear(GL33.GL_COLOR_BUFFER_BIT);
+        // Clear the color buffer to black
+        GL33.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        // Clear both the depth and color buffers
+        GL33.glClear(GL33.GL_COLOR_BUFFER_BIT | GL33.GL_DEPTH_BUFFER_BIT);
 
         // Create a graphics context to then populate while going up the stack
         // We create a new context every time we go through the stack
         GraphicsContext ctx = new GraphicsContext();
         // Go up the stack and use all objects
         // It's important to follow the order of the stack such that dependencies are met
-        for (GraphicsNode node : stack){
-            node.getElement().use(ctx);
+        GraphicsNode node = stack.getRoot();
+        while (node != null){
+            if (node.hasElement()) {
+                node.getElement().use(ctx);
+            }
+            node = node.next();
         }
     }
 
@@ -140,8 +153,31 @@ public class GraphicsDriver {
      * @param data The PNG or JPG of the image we're loading from
      * @throws java.security.InvalidParameterException If the image provided fails to decode
      */
-    public void pushTexture(Byte[] data){
+    public void pushTexture(Image data){
+        GLTexture texture = new GLTexture();
 
+        ByteBuffer img_data = MemoryUtil.memAlloc(data.getDataSize());
+
+        // Copy the data to the buffer
+        for (Byte b : data.getData()) {
+            img_data.put(b);
+        }
+
+        img_data.flip();
+
+        texture.uploadTexture(img_data, data.getWidth(), data.getHeight());
+
+
+        // Push our texture to the stack
+        stack.push(texture);
+    }
+
+    /**
+     * Temporary method, delete later
+     */
+    @Deprecated
+    public void pushObject(GLObject obj){
+        stack.push(obj);
     }
 
     /**
@@ -161,7 +197,7 @@ public class GraphicsDriver {
      */
     public void destroy(){
         while (stack.hasElements()){
-            stack.pop();
+            stack.pop().getElement().destroy();
         }
 
         window.destroy();

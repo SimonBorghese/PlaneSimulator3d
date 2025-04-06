@@ -135,4 +135,18 @@ public class Vector {
     public glm_.vec3.Vec3 toGLM(){
         return new glm_.vec3.Vec3(x, y, z);
     }
+
+    /**
+     * Return the sum of this vector and another vector
+     * @param vector The other vector to add to
+     * @return The sum of this vector and the other vector
+     * @throws NullPointerException If the provided vector is null
+     */
+    public Vector plus(Vector vector){
+        if (vector == null){
+            throw new NullPointerException("The provided vector for addition is null!");
+        }
+
+        return new Vector(x + vector.getX(), y + vector.getY(), z + vector.getZ());
+    }
 }

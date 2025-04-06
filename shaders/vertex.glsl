@@ -23,5 +23,5 @@ void main(){
     oTex = aTex;
 
     // Define the vertex as the input position with a W of 1.0
-    gl_Position = projection * model * vec4(aPos, 1.0);
+    gl_Position = projection * view * vec4(aPos, 1.0);
 }

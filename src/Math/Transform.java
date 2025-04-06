@@ -46,5 +46,4 @@ public class Transform {
     public Vector getRotation() {
         return rotation;
     }
-
 }

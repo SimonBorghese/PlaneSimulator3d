@@ -18,8 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.rmi.UnexpectedException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import Math.Image;
 import org.lwjgl.system.MemoryUtil;
@@ -59,14 +61,14 @@ public class DataDriver {
         // The Google API only accepts lists of 512 or less, split up the list into groups of 512 for the most efficiency
         for (int i = 0; i < (coordinates.size() % 512); i++){
             // Establish our raw coordinates
-            HashMap<String, String> rawCoordinates = new HashMap<>();
+            ArrayList<String> rawCoordinates = new ArrayList<>();
 
             // Generate out raw coordinates
             for (int j = 0; j < (coordinates.size() - 512 * i); j++){
                 WorldCoordinate coordinate = coordinates.get(j + (512 * i));
 
-                rawCoordinates.put(String.format("%.7f", coordinate.getLatitude()),
-                        String.format("%.7f", coordinate.getLongitude()));
+                rawCoordinates.add(String.format("%.7f", coordinate.getLatitude()));
+                rawCoordinates.add(String.format("%.7f", coordinate.getLongitude()));
             }
 
             // Send and parse the result

@@ -1,6 +1,19 @@
 import Graphics.GLCamera;
 import Graphics.GraphicsDriver;
 
+import Math.Image;
+
+import Data.*;
+import glm_.glm;
+import org.poly2tri.Poly2Tri;
+import org.poly2tri.geometry.polygon.Polygon;
+import org.poly2tri.geometry.polygon.PolygonPoint;
+import org.poly2tri.geometry.primitives.Point;
+import org.poly2tri.triangulation.delaunay.DelaunayTriangle;
+
+import javax.naming.ConfigurationException;
+import java.util.*;
+
 /**
  * PlaneSimulator3d
  * This is a flight tracker/simulator created by Simon Borghese for CS 220
@@ -20,8 +33,130 @@ public class Driver {
         // Add our camera to the driver
         gDriver.addCamera(newCamera);
 
+        // Add our texture to the stack
+
+        Data.DataDriver dataDriver = null;
+        try {
+            dataDriver = new DataDriver();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        double[][] heightmap = new double[10][10];
+        double lat = 37.837383;
+        double lng = -79.068722;
+        ArrayList<WorldCoordinate> cords = new ArrayList<>();
+
+        for (int x = -2; x < 2; x++){
+            for (int y = -2; y < 2; y++){
+                double lat_p = (double) x * (0.001) + lat;
+                double lng_p = (double) y * (0.001) + lng;
+                cords.add(
+                        new WorldCoordinate(lat_p, lng_p)
+                );
+            }
+        }
+
+        HashMap<WorldCoordinate, Float> result_cords = dataDriver.getElevationData(cords);
+
+
+        double lat_min = result_cords.keySet().stream().toList().getFirst().getLatitude();
+        double lat_max = result_cords.keySet().stream().toList().getFirst().getLatitude();
+
+        double lng_min = result_cords.keySet().stream().toList().getFirst().getLongitude();
+        double lng_max = result_cords.keySet().stream().toList().getFirst().getLongitude();
+
+        for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()){
+            lat_min = Math.min(lat_min,cord.getKey().getLatitude());
+            lat_max = Math.max(lat_max,cord.getKey().getLatitude());
+
+            lng_min = Math.min(lng_min, cord.getKey().getLongitude());
+            lng_max = Math.max(lng_max, cord.getKey().getLongitude());
+        }
+
+        // Create a tessilated square
+        int resolution = 10;
+        double constant_factor = 1.0 / 1000.0;
+
+        float[] vertices = new float[resolution*resolution*5];
+        int[] elements = new int[(resolution-1)*resolution * 2];
+
+        for (int i =0;  i < resolution - 1; i++){
+            for (int j = 0; j < resolution; j++){
+                for (int k =0; k < 2; k++){
+                    elements[(i*resolution*2) + (j*2) + k] = (j + resolution * (i + k));
+                }
+            }
+        }
+
+        for (int i = 0; i < resolution; i++){
+            for (int j  = 0; j < resolution; j++){
+                vertices[(i * resolution * 5) + (j * 5)]
+                        = (float) ( -resolution / 2.0 + i);
+                double result_y = 0.0;
+                for (Map.Entry<WorldCoordinate, Float> cord: result_cords.entrySet()){
+                    double pos_x = (lat_max - cord.getKey().getLatitude()) / (lat_max - lat_min);
+                    double pos_y = (lng_max - cord.getKey().getLongitude()) / (lng_max - lng_min);
+
+                    double radius_x = ((double) j / (double) resolution) - pos_x;
+                    double radius_y = ((double) i / (double) resolution) - pos_y;
+
+                    double radius = Math.sqrt(Math.pow(radius_x, 2) + Math.pow(radius_y, 2));
+                    double r_sqr = Math.pow(radius, 2);
+
+                    double dist = (constant_factor) * (cord.getValue()) * (1 / Math.max(r_sqr, 1.0));
+                    result_y += dist;
+                    System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
+                }
+                vertices[(i * resolution * 5) + (j * 5) + 1]
+                        = (float) (result_y);
+                vertices[(i * resolution * 5) + (j * 5) + 2]
+                        = (float) (-resolution / 2.0 + j);
+
+                vertices[(i * resolution * 5) + (j * 5) + 3] = (float) (vertices[(i * resolution * 5) + (j * 5)]
+                + (resolution / 2.0 + (double) i)) / (float) (-resolution / 2.0 + resolution);
+                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) (vertices[(i * resolution * 5) + (j * 5) + 2]
+                        + (resolution / 2.0 + (double) j)) / (float) (-resolution / 2.0 + resolution);
+            }
+        }
+
+        try {
+            Image raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(lat,
+                    lng), 15);
+
+            gDriver.pushTexture(raw_image);
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+
+        Graphics.GLVertexArray test_mesh = new Graphics.GLVertexArray();
+
+        test_mesh.bindElementsForUse();
+
+        test_mesh.uploadVertices(vertices);
+
+        test_mesh.uploadElements(elements);
+
+        test_mesh.configureVertexArray();
+
+        gDriver.pushObject(test_mesh);
+
+        long time = System.currentTimeMillis();
         while (gDriver.loop()){
 
+            long current_time = System.currentTimeMillis();
+
+            double dt = (double) (current_time - time) / 1000.0;
+
+            newCamera.getTransform().getPos().setZ(-15.5);
+
+            newCamera.getTransform().getPos().setX(-2.5);
+
+            newCamera.getTransform().getPos().setY(45.0);
+
+            newCamera.getTransform().getRotation().setX(-55.0);
+
+            time = System.currentTimeMillis();
         }
 
         gDriver.destroy();

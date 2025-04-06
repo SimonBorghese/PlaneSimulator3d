@@ -19,7 +19,7 @@ import java.util.Iterator;
  * This is implemented using the GraphicsNode object which are LinkedNodes
  * To keep O(1) operation, alternate between push and pop, otherwise top will need to be rebuilt
  */
-public class GraphicsStack implements Iterable<GraphicsNode> {
+public class GraphicsStack {
     /**
      * This is the first node of our stack, may be null
      */
@@ -31,13 +31,6 @@ public class GraphicsStack implements Iterable<GraphicsNode> {
     private GraphicsNode top;
 
     /**
-     * The node BEFORE the top node
-     * This is here to keep the first pop() O(1), the next O(n), and then back to O(1),
-     * If the length is less than 2, this will be null
-     */
-    private GraphicsNode before_top;
-
-    /**
      * Construct a stack with a provided root node and top node, if there is no link between these objects, an exception
      * will be thrown eventually.
      * The stack is NOT BUILT HERE! So before_top will always be null.
@@ -47,7 +40,6 @@ public class GraphicsStack implements Iterable<GraphicsNode> {
     public GraphicsStack(GraphicsNode root, GraphicsNode top) {
         this.root = root;
         this.top = top;
-        this.before_top = null;
     }
 
     /**
@@ -77,32 +69,17 @@ public class GraphicsStack implements Iterable<GraphicsNode> {
         if (next == null){
             throw new InvalidParameterException("The provided node is null!");
         }
-        // If we have no stack
-        if (root == null){
-            this.root = next;
-            this.top = null;
-            this.before_top = null;
-        }
-        // If the stack has no top but a before_top
-        else if (top == null && before_top != null){
-            before_top.setNext(next);
-            this.top = next;
+        // If we have a top node, then set the next node of top to our new node then set the new node to top
+        if (top != null){
             top.setNext(next);
-            top = next;
+        } else if (root != null){
+            // If we don't have a top node, but we do have a root, add it to that
+            root.setNext(next);
+        } else{
+            // If we don't have a root or top, we're empty
+            root = next;
         }
-        // If there is a top, we don't care about the before_top
-        else if (top != null){
-            // Set before_top to top which still should point to the old top
-            before_top = top;
-            top.setNext(next);
-            top = next;
-        }
-        // If we're not in any of these states, the stack is one element long, set before_top to the current top
-        else{
-            rebuildStack();
-            // BEWARE A RECURSION LOOP HERE
-            push(next);
-        }
+        top = next;
     }
 
     /**
@@ -131,63 +108,27 @@ public class GraphicsStack implements Iterable<GraphicsNode> {
         if (root == null){
             throw new InvalidParameterException("Root is null!");
         }
-        if (top == null && root.hasNext()){
-            // REBUILD THE STACK, this is slow and may be suboptimal
-            rebuildStack();
+
+        // We store our current node and the node before it
+        GraphicsNode node = root;
+        GraphicsNode prev = null;
+        while (node.hasNext()){
+            // If we have another node, set the previous to the current and then iterate
+            prev = node;
+            node = node.next();
         }
 
-        // At this point, if top is still null, then the top must be root
-
-        // Get the top of the stack
-        GraphicsNode top;
-
-        if (this.top != null){
-            top = this.top;
+        // If we have a previous node then we have more than one node and therefore set the previous node as the top
+        if (prev != null){
+            prev.setNext(null);
+            top = prev;
         } else{
-            top = root;
+            // If we dont have a previous node then the root is the only node, we pop it off here.
             root = null;
-        }
-        // Set the top of the stack to the one before this, if it is null, this is ok, next time it'll rebuild to root
-
-        this.top = before_top;
-
-        if (this.top != null) {
-            // Set the top next to null
-            this.top.setNext(null);
-        }
-
-        if (top != null){
-            // Destroy whatever was in top if it has it
-            if (top.hasElement()){
-                top.getElement().destroy();
-            }
         }
 
         // Return what was on top
-        return top;
-    }
-
-    /**
-     * Rebuild the stack, this is public as it may be more desirable to rebuild at a point where it won't affect
-     * performance rather than waiting for the next pop()
-     * This will NOT throw an exception if root is null, rather it'll just do nothing
-     * Whatever is in top and before_top *WILL* be lost
-     */
-    public void rebuildStack(){
-        if (root != null){
-            GraphicsNode current = root;
-            GraphicsNode previous_node = null;
-            while (current.next() != null){
-                previous_node = current;
-                current = current.next();
-            }
-            before_top = previous_node;
-            if (current == root){
-                top = null;
-            } else {
-                top = current;
-            }
-        }
+        return node;
     }
 
     /**
@@ -205,28 +146,4 @@ public class GraphicsStack implements Iterable<GraphicsNode> {
     public boolean hasElements(){
         return root != null;
     }
-
-    /**
-     * Check whether this stack needs to be rebuilt
-     * @return If both top and before_top are null but root isn't
-     */
-    public boolean needsRebuild(){
-        return (top == null && before_top == null) && root != null;
-    }
-
-    /**
-     * Return the root of the stack for iteration. Guaranteed to go from the bottom of the stack to the top.
-     * @return The root of the stack as an iterator
-     * @throws IllegalStateException If there is no root
-     */
-    @NotNull
-    @Override
-    public Iterator<GraphicsNode> iterator() {
-        if (!hasElements()){
-            throw new IllegalStateException("The stack is empty!");
-        }
-        return root;
-    }
-
-
 }

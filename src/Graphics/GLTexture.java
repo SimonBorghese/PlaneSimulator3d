@@ -38,17 +38,13 @@ public class GLTexture extends GLObject{
      * @param height Height of the input texture
      * @throws java.security.InvalidParameterException If the data parameter isn't equal to width * height * 3
      */
-    public void uploadTexture(byte[] data, int width, int height) throws InvalidParameterException {
-        if (data.length < width * height * 3){
+    public void uploadTexture(ByteBuffer data, int width, int height) throws InvalidParameterException {
+        if (data.limit() < width * height * 3){
             System.out.println("Data length is too short, continuing would result in a segFault");
             throw new InvalidParameterException("Provided Texture data is less than width * height * 3");
         }
 
-        // We MUST copy the data from the java heap to a heap OpenGL can access
-        ByteBuffer glHeap = MemoryUtil.memAlloc(data.length);
-
-        glHeap.put(data).flip();
-
+        GL33.glActiveTexture(GL33.GL_TEXTURE0);
         // Bind the texture to the 2D unit
         GL33.glBindTexture(GL33.GL_TEXTURE_2D, handle);
 
@@ -56,7 +52,7 @@ public class GLTexture extends GLObject{
 
         // Upload the texture
         GL33.glTexImage2D(GL33.GL_TEXTURE_2D,
-                0, GL33.GL_RGB, width, height, 0, GL33.GL_RGB, GL33.GL_UNSIGNED_BYTE, glHeap);
+                0, GL33.GL_RGB, width, height, 0, GL33.GL_RGB, GL33.GL_UNSIGNED_BYTE, data);
 
         GL33.glTexParameteri(GL33.GL_TEXTURE_2D, GL33.GL_TEXTURE_WRAP_S, GL33.GL_REPEAT);
         GL33.glTexParameteri(GL33.GL_TEXTURE_2D, GL33.GL_TEXTURE_WRAP_T, GL33.GL_REPEAT);

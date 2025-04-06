@@ -161,9 +161,12 @@ public class InternetDriver {
      * @return The raw JSON from Google's server
      * @throws java.security.InvalidParameterException Thrown if cords has more than 512 key value pairs (A limit from Google's API)
      */
-    public String getElevation(HashMap<String, String> cords){
+    public String getElevation(ArrayList<String> cords){
         if (cords.size() > 512){
             throw new InvalidParameterException("Too many coordinates provided!");
+        }
+        if (cords.size() % 2 != 0){
+            throw new InvalidParameterException("Coordinates not valid (not divisible by 2)");
         }
 
         if (num_queries_elevation + cords.size() > MAX_ELEVATION_QUERIES){
@@ -187,9 +190,9 @@ public class InternetDriver {
             }
         }
         // Google defines a list of cords as "[Lat1],[Long1]|[Lat2],[Long2]|...[LatN],[LongN}"
-        StringJoiner parameter_generation = new StringJoiner("|");
-        for (Map.Entry<String, String> value: cords.entrySet()){
-            parameter_generation.add(String.format("%s,%s", value.getKey(), value.getValue()));
+        StringJoiner parameter_generation = new StringJoiner("%7C");
+        for (int i = 0; i < cords.size(); i+=2){
+            parameter_generation.add(String.format("%s,%s", cords.get(i), cords.get(i+1)));
         }
 
         // Construct the RESTful API request

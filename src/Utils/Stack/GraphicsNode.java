@@ -9,7 +9,7 @@ import java.util.Iterator;
  * This is the node object which will be used for our linked list implementation, though this one is special because
  * it only takes GLObject
  */
-public class GraphicsNode implements Iterator<GraphicsNode> {
+public class GraphicsNode{
     /**
      * The GLObject this node points to
      */
@@ -95,6 +95,4 @@ public class GraphicsNode implements Iterator<GraphicsNode> {
     public void setElement(GLObject element){
         this.element = element;
     }
-
-
 }

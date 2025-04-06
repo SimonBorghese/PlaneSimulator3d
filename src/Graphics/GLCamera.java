@@ -83,26 +83,34 @@ public class GLCamera extends GLObject{
         int view_loc = context.getShader().getUniformLocation("view");
 
         // Generate our transformation matrix
-        // We need a position, look at, and then up, we assume up is always +y but look at must be derivied
+        // We need a position, look at, and then up, we assume up is always +y but look at must be derived
         // BASED ON : https://learnopengl.com/Getting-started/Camera
         Vector rotation = transform.getRotation();
+
+        // Extract the pitch
+        double pitch = rotation.getX();
+
+        // Offset yaw by 90 degrees to offset for a math issue
+        double yaw = rotation.getY() + 90.0;
+
         Vector look_at = new Vector();
         look_at.setX(
-                glm.INSTANCE.cos(glm.INSTANCE.radians(rotation.getY())) *
-                        glm.INSTANCE.cos(glm.INSTANCE.radians(rotation.getX()))
+                glm.INSTANCE.cos(glm.INSTANCE.radians(yaw)) *
+                        glm.INSTANCE.cos(glm.INSTANCE.radians(pitch))
         );
         look_at.setY(
-                glm.INSTANCE.sin(glm.INSTANCE.radians(rotation.getX()))
+                glm.INSTANCE.sin(glm.INSTANCE.radians(pitch))
         );
         look_at.setZ(
-                glm.INSTANCE.sin(glm.INSTANCE.radians(rotation.getY())) *
-                        glm.INSTANCE.cos(glm.INSTANCE.radians(rotation.getX()))
+                glm.INSTANCE.sin(glm.INSTANCE.radians(yaw)) *
+                        glm.INSTANCE.cos(glm.INSTANCE.radians(pitch))
         );
 
         look_at.normalize();
 
         // Our view matrix assumes up is always +y
-        Matrix view = new Matrix(transform.getPos(), look_at, new Vector(0.0f, 1.0f, 0.0f));
+        Matrix view = new Matrix(transform.getPos(), transform.getPos().plus(look_at),
+                new Vector(0.0f, 1.0f, 0.0f));
 
         // Set the view and projection matrix
         context.getShader().setMatrixUniform(proj_loc, projection.getRawMatrix());
