@@ -7,6 +7,8 @@
 package Graphics;
 
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+
 import org.lwjgl.*;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
@@ -44,6 +46,11 @@ public class Window implements GLFWKeyCallbackI {
     private GLFWKeyCallbackI key_callback_context;
 
     /**
+     * A list of all keys called before the last window loop
+     */
+    private ArrayList<Integer> key_list;
+
+    /**
      * The constructor for the window, sets parameters and nothing else.
      * @param window_width Window/Viewport width, must be < 1 but realistically should be a reasonable size but also
      *                     less than the resolution of the user's monitor
@@ -71,6 +78,10 @@ public class Window implements GLFWKeyCallbackI {
         this.height = window_height;
         this.ogl_major = major_version;
         this.ogl_minor = minor_version;
+
+        // Construct a key list for every possible key. 256 because we're probably not dealing with any more than the
+        // number of ASCII keys
+        key_list = new ArrayList<>(256);
     }
 
     /**
@@ -123,6 +134,8 @@ public class Window implements GLFWKeyCallbackI {
         // Ensure our OpenGL context is current incase swing steals it
         GLCapabilities caps = GL.createCapabilities();
 
+        key_list.clear();
+
         // Poll the events which may call for the window to be closed
         GLFW.glfwPollEvents();
 
@@ -158,6 +171,7 @@ public class Window implements GLFWKeyCallbackI {
      */
     @Override
     public void invoke(long window, int key, int scancode, int action, int mods) {
+        key_list.add(key);
         switch (key){
             case GLFW.GLFW_KEY_ESCAPE:
                 GLFW.glfwSetWindowShouldClose(window, true);
@@ -165,5 +179,14 @@ public class Window implements GLFWKeyCallbackI {
             default:
                 break;
         }
+    }
+
+    /**
+     * Return the keylist for this loop. This should be called inbetween calls of loop() otherwise
+     * it'll be empty
+     * @return A list of keys pressed in this frame
+     */
+    public ArrayList<Integer> getKeyList(){
+        return key_list;
     }
 }

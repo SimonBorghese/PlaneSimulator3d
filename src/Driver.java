@@ -1,15 +1,13 @@
 import Graphics.GLCamera;
+import Graphics.GLTransform;
 import Graphics.GraphicsDriver;
 
 import Math.Image;
 
 import Data.*;
 import glm_.glm;
-import org.poly2tri.Poly2Tri;
-import org.poly2tri.geometry.polygon.Polygon;
-import org.poly2tri.geometry.polygon.PolygonPoint;
-import org.poly2tri.geometry.primitives.Point;
-import org.poly2tri.triangulation.delaunay.DelaunayTriangle;
+
+import Math.Transform;
 
 import javax.naming.ConfigurationException;
 import java.util.*;
@@ -28,7 +26,7 @@ public class Driver {
         GraphicsDriver gDriver = new GraphicsDriver(800,600,4,1);
         gDriver.init();
 
-        GLCamera newCamera = new GLCamera(45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+        GLCamera newCamera = new GLCamera(45.0f, 800.0f / 600.0f, 0.1f, 10000.0f);
 
         // Add our camera to the driver
         gDriver.addCamera(newCamera);
@@ -66,17 +64,21 @@ public class Driver {
         double lng_min = result_cords.keySet().stream().toList().getFirst().getLongitude();
         double lng_max = result_cords.keySet().stream().toList().getFirst().getLongitude();
 
+        double min_elevation = result_cords.values().stream().toList().getFirst();
+
         for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()){
             lat_min = Math.min(lat_min,cord.getKey().getLatitude());
             lat_max = Math.max(lat_max,cord.getKey().getLatitude());
 
             lng_min = Math.min(lng_min, cord.getKey().getLongitude());
             lng_max = Math.max(lng_max, cord.getKey().getLongitude());
+
+            min_elevation = Math.min(min_elevation,cord.getValue());
         }
 
         // Create a tessilated square
         int resolution = 10;
-        double constant_factor = 1.0 / 1000.0;
+        double constant_factor = 1000.0;
 
         float[] vertices = new float[resolution*resolution*5];
         int[] elements = new int[(resolution-1)*resolution * 2];
@@ -104,25 +106,25 @@ public class Driver {
                     double radius = Math.sqrt(Math.pow(radius_x, 2) + Math.pow(radius_y, 2));
                     double r_sqr = Math.pow(radius, 2);
 
-                    double dist = (constant_factor) * (cord.getValue()) * (1 / Math.max(r_sqr, 1.0));
+                    double dist = (cord.getValue() / (min_elevation)) * (1 / (r_sqr * constant_factor));
                     result_y += dist;
                     System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
                 }
                 vertices[(i * resolution * 5) + (j * 5) + 1]
-                        = (float) (result_y);
+                        = (float) (0.0);
                 vertices[(i * resolution * 5) + (j * 5) + 2]
                         = (float) (-resolution / 2.0 + j);
 
-                vertices[(i * resolution * 5) + (j * 5) + 3] = (float) (vertices[(i * resolution * 5) + (j * 5)]
-                + (resolution / 2.0 + (double) i)) / (float) (-resolution / 2.0 + resolution);
-                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) (vertices[(i * resolution * 5) + (j * 5) + 2]
-                        + (resolution / 2.0 + (double) j)) / (float) (-resolution / 2.0 + resolution);
+                vertices[(i * resolution * 5) + (j * 5) + 3] = (float) -(vertices[(i * resolution * 5) + (j * 5)]
+                + (resolution / 2.0)) / (float) (resolution);
+                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) -(vertices[(i * resolution * 5) + (j * 5) + 2]
+                        + (resolution / 2.0)) / (float) (resolution);
             }
         }
 
         try {
             Image raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(lat,
-                    lng), 15);
+                    lng), 14);
 
             gDriver.pushTexture(raw_image);
         } catch (ConfigurationException e) {
@@ -139,6 +141,28 @@ public class Driver {
 
         test_mesh.configureVertexArray();
 
+        Transform transform = new Transform();
+        transform.getPos().setX(0.0);
+        GLTransform glTransform = new GLTransform(transform);
+
+        gDriver.pushObject(glTransform);
+
+        gDriver.pushObject(test_mesh);
+
+        try {
+            Image raw_image = dataDriver.getSatalliteImage(new WorldCoordinate(lat - 0.0101,
+                    lng), 14);
+
+            gDriver.pushTexture(raw_image);
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+
+        Transform transform2 = new Transform();
+        transform.getPos().setX(-9.0);
+        GLTransform glTransform2 = new GLTransform(transform2);
+
+        gDriver.pushObject(glTransform2);
         gDriver.pushObject(test_mesh);
 
         long time = System.currentTimeMillis();
@@ -148,13 +172,13 @@ public class Driver {
 
             double dt = (double) (current_time - time) / 1000.0;
 
-            newCamera.getTransform().getPos().setZ(-15.5);
+            newCamera.getTransform().getPos().setZ(-0.5);
 
-            newCamera.getTransform().getPos().setX(-2.5);
+            newCamera.getTransform().getPos().setX(0.0);
 
-            newCamera.getTransform().getPos().setY(45.0);
+            newCamera.getTransform().getPos().setY(50.0);
 
-            newCamera.getTransform().getRotation().setX(-55.0);
+            newCamera.getTransform().getRotation().setX(-89.9);
 
             time = System.currentTimeMillis();
         }
