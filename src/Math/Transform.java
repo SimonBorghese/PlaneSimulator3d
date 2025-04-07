@@ -1,5 +1,7 @@
 package Math;
 
+import java.security.InvalidParameterException;
+
 /**
  * A transform in 3d space. This represents a position in 3d space and eular rotations.
  */
@@ -37,6 +39,18 @@ public class Transform {
      */
     public Vector getPos() {
         return pos;
+    }
+
+    /**
+     * Set this transform's position from a vector
+     * @param pos The new position for this transform
+     * @throws java.security.InvalidParameterException If the provided position is null
+     */
+    public void setPos(Vector pos) {
+        if (pos == null){
+            throw new InvalidParameterException("Transform provided with new position as null");
+        }
+        this.pos = pos;
     }
 
     /**

@@ -202,4 +202,28 @@ public class GraphicsDriver {
 
         window.destroy();
     }
+
+    /**
+     * Get the set Window Width
+     * @return The Window Width
+     */
+    public int getWindowWidth(){
+        return window_width;
+    }
+
+    /**
+     * Get the set Window Height
+     * @return The Window Height
+     */
+    public int getWindowHeight(){
+        return window_height;
+    }
+
+    /**
+     * Return a pointer to the Window object
+     * @return The pointer to the window object
+     */
+    public Window getWindow(){
+        return window;
+    }
 }

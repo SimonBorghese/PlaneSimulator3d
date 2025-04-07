@@ -149,4 +149,38 @@ public class Vector {
 
         return new Vector(x + vector.getX(), y + vector.getY(), z + vector.getZ());
     }
+
+    /**
+     * Return the multiplication of this vector and a scalar
+     * @param scalar The scalar to multiply by
+     * @return The sum of this vector and the other vector
+     */
+    public Vector mul(float scalar){
+        return new Vector(x * scalar, y * scalar, z * scalar);
+    }
+
+    /**
+     * Return the cross product of this vector and another vector
+     * @param vector The other vector to add to
+     * @return The sum of this vector and the other vector
+     * @throws NullPointerException If the provided vector is null
+     */
+    public Vector cross(Vector vector){
+        if (vector == null){
+            throw new NullPointerException("The provided vector for cross product is null!");
+        }
+
+        // Yes I am offloading the work to the glm library
+        glm_.vec3.Vec3 cross = toGLM().cross(vector.toGLM());
+
+        return new Vector(cross.getX(), cross.getY(), cross.getZ());
+    }
+
+    /**
+     * Get the length of this vector
+     * @return The length of this vector
+     */
+    public double getLength(){
+        return Math.sqrt(Math.pow(x, 2.0) + Math.pow(y, 2.0) + Math.pow(z, 2.0));
+    }
 }

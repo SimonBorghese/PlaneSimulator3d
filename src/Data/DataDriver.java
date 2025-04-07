@@ -37,6 +37,7 @@ public class DataDriver {
 
     /**
      * Construct the DataDriver with some usable defaults
+     * @throws ConfigurationException If there is no Google API key
      */
     public DataDriver() throws ConfigurationException {
         // Construct the internet driver with the default constructor to use the provided API key
@@ -120,6 +121,8 @@ public class DataDriver {
             ByteBuffer img_buffer = MemoryUtil.memAlloc(jpeg_image.length);
 
             img_buffer.put(jpeg_image).flip();
+
+            STBImage.stbi_set_flip_vertically_on_load(true);
 
             ByteBuffer decoded = STBImage.stbi_load_from_memory(img_buffer, x_output, y_output, channel_output,
                     3);

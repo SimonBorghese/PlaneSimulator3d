@@ -20,6 +20,11 @@ public class WorldCoordinate {
     private double longitude;
 
     /**
+     * The offset for the XYZ zoom point of this world coordinate, useful for fine tuning satellite images
+     */
+    private Vector offset;
+
+    /**
      * Construct a world coordinate based on a provided, real, latitude and longitude value
      * @param lat Provided, valid Latitude
      * @param lng Provided, valid Longitude
@@ -34,6 +39,8 @@ public class WorldCoordinate {
         }
         latitude = lat;
         longitude = lng;
+
+        offset = new Vector();
     }
 
     /**
@@ -63,12 +70,12 @@ public class WorldCoordinate {
      */
     public Vector toPoint(double tileSize, double zoom){
         Vector point = toPoint(tileSize);
-        double scale = Math.pow(2, zoom);
+        double scale = Math.pow(2, zoom + offset.getZ());
 
-        double x = Math.floor(point.getX() * scale / tileSize);
-        double y = Math.floor(point.getY() * scale / tileSize);
+        double x = Math.floor((point.getX() * scale) / tileSize);
+        double y = Math.floor((point.getY() * scale) / tileSize);
 
-        return new Vector(x, y, zoom);
+        return new Vector(x + offset.getX(), y+offset.getY(), zoom + offset.getZ());
     }
 
     public double getLatitude() {
@@ -85,5 +92,13 @@ public class WorldCoordinate {
 
     public void setLongitude(double newLng){
         longitude = newLng;
+    }
+
+    /**
+     * Get a pointer to the Vector for the offset
+     * @return The pointer to the offset vector
+     */
+    public Vector getOffset(){
+        return offset;
     }
 }

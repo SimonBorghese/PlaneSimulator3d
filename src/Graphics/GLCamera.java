@@ -56,6 +56,19 @@ public class GLCamera extends GLObject{
     }
 
     /**
+     * Set the transform
+     * @param transform The new transform for this camera
+     * @throws InvalidParameterException If transform is null
+     */
+    public void setTransform(Transform transform){
+        if (transform == null){
+            throw new InvalidParameterException("Provided Transform to camera is null");
+        }
+        this.transform = transform;
+    }
+
+
+    /**
      * Do nothing as we don't use the handle
      */
     @Override
@@ -84,6 +97,23 @@ public class GLCamera extends GLObject{
 
         // Generate our transformation matrix
         // We need a position, look at, and then up, we assume up is always +y but look at must be derived
+
+        Vector look_at = getForward();
+
+        // Our view matrix assumes up is always +y
+        Matrix view = new Matrix(transform.getPos(), transform.getPos().plus(look_at),
+                new Vector(0.0f, 1.0f, 0.0f));
+
+        // Set the view and projection matrix
+        context.getShader().setMatrixUniform(proj_loc, projection.getRawMatrix());
+        context.getShader().setMatrixUniform(view_loc, view.getRawMatrix());
+    }
+
+    /**
+     * Calculate the forward vector for this camera
+     * @return A normalized vector for the forward of this camera
+     */
+    public Vector getForward(){
         // BASED ON : https://learnopengl.com/Getting-started/Camera
         Vector rotation = transform.getRotation();
 
@@ -92,7 +122,6 @@ public class GLCamera extends GLObject{
 
         // Offset yaw by 90 degrees to offset for a math issue
         double yaw = rotation.getY() + 90.0;
-
         Vector look_at = new Vector();
         look_at.setX(
                 glm.INSTANCE.cos(glm.INSTANCE.radians(yaw)) *
@@ -106,14 +135,8 @@ public class GLCamera extends GLObject{
                         glm.INSTANCE.cos(glm.INSTANCE.radians(pitch))
         );
 
+        // Normalize
         look_at.normalize();
-
-        // Our view matrix assumes up is always +y
-        Matrix view = new Matrix(transform.getPos(), transform.getPos().plus(look_at),
-                new Vector(0.0f, 1.0f, 0.0f));
-
-        // Set the view and projection matrix
-        context.getShader().setMatrixUniform(proj_loc, projection.getRawMatrix());
-        context.getShader().setMatrixUniform(view_loc, view.getRawMatrix());
+        return look_at;
     }
 }
