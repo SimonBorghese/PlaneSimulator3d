@@ -44,6 +44,32 @@ public class WorldCoordinate {
     }
 
     /**
+     * Construct a world coordinate from an X,Y position and scale from the tile API.
+     * VERY EXPENSIVE OPERATION!!!
+     * @throws InvalidParameterException If the result generates an invalid coordinate
+     */
+    public WorldCoordinate(double x, double y, double zoom){
+        double s = Math.pow(2.0, zoom);
+
+        double latitude =
+                360 * (-0.25 + ((1/Math.PI) * (Math.atan(Math.pow(Math.E, -(Math.PI * (((y*2)/s)-1)))))));
+
+        double longitude =
+                360 * (-0.5 + (x/s));
+
+        if (latitude < -90.0 || latitude > 90.0){
+            throw new InvalidParameterException("Generated Tile doesn't exist in the X axis!");
+        }
+        if (longitude < -180.0 || longitude > 180.0){
+            throw new InvalidParameterException("Generated Tile doesn't exist in the Y axis!");
+        }
+        this.latitude = latitude;
+        this.longitude = longitude;
+
+        offset = new Vector();
+    }
+
+    /**
      * Construct a default world coordinate from a reasonable, recognizable world coordinate
      */
     public WorldCoordinate(){

@@ -24,4 +24,10 @@ public interface AppProcess {
      * @throws java.security.InvalidParameterException If context is null and/or if dt is negative
      */
     void frame(double dt, AppContext context) throws InvalidParameterException;
+
+    /**
+     * Some processes may use unsafe objects. This method allows them to be destroyed. The process should be
+     * considered useless after this is called.
+     */
+    void destroy();
 }

@@ -129,10 +129,8 @@ public class GLVertexArray extends GLObject{
         }
 
         useMesh();
-        // TODO FIX ME!!!!!!
-        for (int s = 0; s < 10 - 1; ++s) {
-            GL33.glDrawElements(GL33.GL_TRIANGLE_STRIP, 10 * 2, GL33.GL_UNSIGNED_INT, (4 * 10 * 2 * s));
-        }
+
+        GL33.glDrawElements(GL33.GL_TRIANGLE_STRIP, num_elements, GL33.GL_UNSIGNED_INT, 0);
 
         // Set ourselves to the context
         context.setMesh(this);

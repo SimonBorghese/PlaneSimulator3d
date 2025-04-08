@@ -113,6 +113,15 @@ public class AppCamera implements AppProcess{
     }
 
     /**
+     * Call this method to the destroy the camera. The GLCamera isn't actually unsafe, but it'll mark itself as
+     * destroyed. So after this call, this process cannot be used for *RENDERING* anymore.
+     */
+    @Override
+    public void destroy() {
+        camera.destroy();
+    }
+
+    /**
      * Get the GLCamera from this object
      * @return A GLCamera from this object
      */

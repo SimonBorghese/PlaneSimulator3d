@@ -44,20 +44,20 @@ public class AppDriver {
      */
     public AppDriver(int window_width, int window_height){
         try {
+            // Construct the app processes array
+            appProcesses = new ArrayList<>();
+
             // Create a graphics driver for our context, OpenGL 3.3 is embedded
             GraphicsDriver graphicsDriver = new GraphicsDriver(window_width, window_height, 3,3);
 
             // The data driver may through a configuration exception
             DataDriver dataDriver = new DataDriver();
 
-            context = new AppContext(graphicsDriver, dataDriver);
+            context = new AppContext(graphicsDriver, dataDriver, appProcesses);
         } catch (ConfigurationException e) {
             System.out.println("No Google API key provided. Please provide one in a .google_api_key file");
             System.exit(1);
         }
-
-        // Construct the app processes array
-        appProcesses = new ArrayList<>();
     }
 
     /**
@@ -152,21 +152,22 @@ public class AppDriver {
 
                 vertices[(i * resolution * 5) + (j * 5) + 3] = (float) -(vertices[(i * resolution * 5) + (j * 5)]
                         + (resolution / 2.0)) / (float) (resolution-1);
-                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) -(vertices[(i * resolution * 5) + (j * 5) + 2]
+                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) (vertices[(i * resolution * 5) + (j * 5) + 2]
                         + (resolution / 2.0)) / (float) (resolution-1);
             }
         }
 
+        WorldCoordinate base = new WorldCoordinate(lat,
+                lng);
         try {
-            Image raw_image = context.getDataDriver().getSatalliteImage(new WorldCoordinate(lat,
-                    lng), 13);
+            Image raw_image = context.getDataDriver().getSatalliteImage(base, 13);
 
             context.getGraphicsDriver().pushTexture(raw_image);
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }
 
-        Graphics.GLVertexArray test_mesh = new Graphics.GLVertexArray();
+        Graphics.GLHeightmap test_mesh = new Graphics.GLHeightmap(10);
 
         test_mesh.bindElementsForUse();
 
@@ -185,9 +186,10 @@ public class AppDriver {
         context.getGraphicsDriver().pushObject(test_mesh);
 
         try {
-            WorldCoordinate offset_cords = new WorldCoordinate(lat, lng);
-            offset_cords.getOffset().setX(-1.0);
-            Image raw_image = context.getDataDriver().getSatalliteImage(offset_cords, 13);
+            Vector base_point = base.toPoint(256, 13);
+
+            WorldCoordinate adjacent = new WorldCoordinate(base_point.getX() - 1, base_point.getY(), 13);
+            Image raw_image = context.getDataDriver().getSatalliteImage(adjacent, 13);
 
             context.getGraphicsDriver().pushTexture(raw_image);
         } catch (ConfigurationException e) {
