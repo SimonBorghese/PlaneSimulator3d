@@ -70,6 +70,21 @@ public class InternetDriver {
     }
 
     /**
+     * Construct an internet driver from an existing one but with a new HTTP Client
+     * @param inetDriver The initial internet driver
+     * @throws InvalidParameterException If the provided inetDriver is null
+     */
+    public InternetDriver(InternetDriver inetDriver){
+        this.httpClient = HttpClient.newHttpClient();
+
+        google_api_tile_session = inetDriver.google_api_tile_session;
+        google_api_key = inetDriver.google_api_key;
+        tileWidth = inetDriver.tileWidth;
+        tileHeight = inetDriver.tileHeight;
+    }
+
+
+    /**
      * Construct this class by reading our APIs keys from specific files. This is a more secure way of doing things
      * since the APY key only touches this class within a private context.
      * This class should read from:

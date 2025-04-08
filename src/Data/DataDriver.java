@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.rmi.UnexpectedException;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,19 @@ public class DataDriver {
         } catch (ConfigurationException | FileNotFoundException e) {
             throw new ConfigurationException("No API key provided for Google Cloud");
         }
+    }
+
+    /**
+     * Construct a DataDriver from an existing one with a derived internet driver
+     * @param dataDriver The old driver to copy from
+     * @throws java.security.InvalidParameterException If dataDriver is null
+     */
+    public DataDriver(DataDriver dataDriver){
+        if (dataDriver == null){
+            throw new InvalidParameterException("Provided DataDriver for cloning was null!");
+        }
+        // Constrict a new internet driver from the old driver
+        inetDriver = new InternetDriver(dataDriver.inetDriver);
     }
 
     /**
