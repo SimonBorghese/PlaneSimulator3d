@@ -227,6 +227,8 @@ public class InternetDriver {
         HttpResponse<String> response = null;
         try {
             response = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+
+            System.out.printf("Response code: %d\n", response.statusCode());
         } catch (UncheckedIOException | InterruptedException | IOException e) {
             System.out.println("Failed to read HTTP response");
             throw new RuntimeException(e);

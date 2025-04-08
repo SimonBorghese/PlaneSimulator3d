@@ -60,12 +60,12 @@ public class DataDriver {
         HashMap<WorldCoordinate, Float> data = new HashMap<>();
         // Begin converting our coordinates to strings usable by the Google API
         // The Google API only accepts lists of 512 or less, split up the list into groups of 512 for the most efficiency
-        for (int i = 0; i < (coordinates.size() % 512); i++){
+        for (int i = 0; i <= (coordinates.size() / 512); i++){
             // Establish our raw coordinates
             ArrayList<String> rawCoordinates = new ArrayList<>();
 
             // Generate out raw coordinates
-            for (int j = 0; j < (coordinates.size() - 512 * i); j++){
+            for (int j = (512*i); j < (coordinates.size() - (512 * i)); j++){
                 WorldCoordinate coordinate = coordinates.get(j + (512 * i));
 
                 rawCoordinates.add(String.format("%.7f", coordinate.getLatitude()));

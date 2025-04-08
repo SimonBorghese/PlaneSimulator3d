@@ -143,7 +143,7 @@ public class AppDriver {
 
                     double dist = (cord.getValue() / (min_elevation)) * (1 / (r_sqr * constant_factor));
                     result_y += dist;
-                    System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
+                    //System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
                 }
                 vertices[(i * resolution * 5) + (j * 5) + 1]
                         = (float) (0.0);
