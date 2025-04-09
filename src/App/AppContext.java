@@ -66,4 +66,22 @@ public class AppContext {
         return appProcesses;
     }
 
+    /**
+     * Checks to see if the context's process list has a specified class
+     * @return The desired class provided, null if it doesn't exist
+     */
+    public AppProcess findAppProcess(Class<AppProcess> processClass) {
+        AppProcess foundProcess = null;
+        for (AppProcess appProcess : appProcesses) {
+            if (foundProcess != null){
+                continue;
+            }
+            if (appProcess.getClass().equals(processClass)) {
+                foundProcess = appProcess;
+            }
+        }
+
+        return foundProcess;
+    }
+
 }
