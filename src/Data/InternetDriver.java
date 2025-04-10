@@ -159,6 +159,8 @@ public class InternetDriver {
             throw new ConfigurationException("Google Tile API session not initialized!");
         }
 
+        System.out.printf("Reading satellite: %f %f\n", coords.getX(), coords.getY());
+
         return ReadBinaryFromURL(
                 String.format(
                         "https://tile.googleapis.com/v1/2dtiles/%d/%d/%d?session=%s&key=%s",
@@ -183,6 +185,8 @@ public class InternetDriver {
         if (cords.size() % 2 != 0){
             throw new InvalidParameterException("Coordinates not valid (not divisible by 2)");
         }
+
+        System.out.printf("Reading: %d cords\n", cords.size());
 
         if (num_queries_elevation + cords.size() > MAX_ELEVATION_QUERIES){
             System.out.printf("[WARNING!!!!!!!!] There has been %d elevation queries from a limit of %d which, " +

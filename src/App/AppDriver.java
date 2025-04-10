@@ -76,8 +76,8 @@ public class AppDriver {
         // TODO REMOVE ME!!!
 
         double[][] heightmap = new double[10][10];
-        double lat = 37.837383;
-        double lng = -79.068722;
+        double lat = 37.80187;
+        double lng = -79.27461;
         ArrayList<WorldCoordinate> cords = new ArrayList<>();
 
         for (int x = -2; x < 2; x++){
@@ -90,118 +90,12 @@ public class AppDriver {
             }
         }
 
-        HashMap<WorldCoordinate, Float> result_cords = context.getDataDriver().getElevationData(cords);
+        // Add our world process
+        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 9);
+        initializeAndAppend(worldProcess);
 
 
-        double lat_min = result_cords.keySet().stream().toList().getFirst().getLatitude();
-        double lat_max = result_cords.keySet().stream().toList().getFirst().getLatitude();
 
-        double lng_min = result_cords.keySet().stream().toList().getFirst().getLongitude();
-        double lng_max = result_cords.keySet().stream().toList().getFirst().getLongitude();
-
-        double min_elevation = result_cords.values().stream().toList().getFirst();
-
-        for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()){
-            lat_min = Math.min(lat_min,cord.getKey().getLatitude());
-            lat_max = Math.max(lat_max,cord.getKey().getLatitude());
-
-            lng_min = Math.min(lng_min, cord.getKey().getLongitude());
-            lng_max = Math.max(lng_max, cord.getKey().getLongitude());
-
-            min_elevation = Math.min(min_elevation,cord.getValue());
-        }
-
-        // Create a tessilated square
-        int resolution = 10;
-        double constant_factor = 1000.0;
-
-        float[] vertices = new float[resolution*resolution*5];
-        int[] elements = new int[(resolution-1)*resolution * 2];
-
-        for (int i =0;  i < resolution - 1; i++){
-            for (int j = 0; j < resolution; j++){
-                for (int k =0; k < 2; k++){
-                    elements[(i*resolution*2) + (j*2) + k] = (j + resolution * (i + k));
-                }
-            }
-        }
-
-        for (int i = 0; i < resolution; i++){
-            for (int j  = 0; j < resolution; j++){
-                vertices[(i * resolution * 5) + (j * 5)]
-                        = (float) ( -resolution / 2.0 + i);
-                double result_y = 0.0;
-                for (Map.Entry<WorldCoordinate, Float> cord: result_cords.entrySet()){
-                    double pos_x = (lat_max - cord.getKey().getLatitude()) / (lat_max - lat_min);
-                    double pos_y = (lng_max - cord.getKey().getLongitude()) / (lng_max - lng_min);
-
-                    double radius_x = ((double) j / (double) resolution) - pos_x;
-                    double radius_y = ((double) i / (double) resolution) - pos_y;
-
-                    double radius = Math.sqrt(Math.pow(radius_x, 2) + Math.pow(radius_y, 2));
-                    double r_sqr = Math.pow(radius, 2);
-
-                    double dist = (cord.getValue() / (min_elevation)) * (1 / (r_sqr * constant_factor));
-                    result_y += dist;
-                    //System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
-                }
-                vertices[(i * resolution * 5) + (j * 5) + 1]
-                        = (float) (0.0);
-                vertices[(i * resolution * 5) + (j * 5) + 2]
-                        = (float) (-resolution / 2.0 + j);
-
-                vertices[(i * resolution * 5) + (j * 5) + 3] = (float) -(vertices[(i * resolution * 5) + (j * 5)]
-                        + (resolution / 2.0)) / (float) (resolution-1);
-                vertices[(i * resolution * 5) + (j * 5) + 4] = (float) (vertices[(i * resolution * 5) + (j * 5) + 2]
-                        + (resolution / 2.0)) / (float) (resolution-1);
-            }
-        }
-
-        WorldCoordinate base = new WorldCoordinate(lat,
-                lng);
-        try {
-            Image raw_image = context.getDataDriver().getSatalliteImage(base, 13);
-
-            context.getGraphicsDriver().pushTexture(raw_image);
-        } catch (ConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-
-        Graphics.GLHeightmap test_mesh = new Graphics.GLHeightmap(10);
-
-        test_mesh.bindElementsForUse();
-
-        test_mesh.uploadVertices(vertices);
-
-        test_mesh.uploadElements(elements);
-
-        test_mesh.configureVertexArray();
-
-        Transform transform = new Transform();
-        transform.getPos().setX(0.0);
-        GLTransform glTransform = new GLTransform(transform);
-
-        context.getGraphicsDriver().pushObject(glTransform);
-
-        context.getGraphicsDriver().pushObject(test_mesh);
-
-        try {
-            Vector base_point = base.toPoint(256, 13);
-
-            WorldCoordinate adjacent = new WorldCoordinate(base_point.getX() - 1, base_point.getY(), 13);
-            Image raw_image = context.getDataDriver().getSatalliteImage(adjacent, 13);
-
-            context.getGraphicsDriver().pushTexture(raw_image);
-        } catch (ConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-
-        Transform transform2 = new Transform();
-        transform.getPos().setX(-9.0);
-        GLTransform glTransform2 = new GLTransform(transform2);
-
-        context.getGraphicsDriver().pushObject(glTransform2);
-        context.getGraphicsDriver().pushObject(test_mesh);
     }
 
     /**
@@ -210,13 +104,13 @@ public class AppDriver {
     public void loop(){
         long time = System.currentTimeMillis();
 
-        camera.getGLCamera().getTransform().getPos().setZ(-2.0);
+        camera.getGLCamera().getTransform().getPos().setZ(0.0);
 
         camera.getGLCamera().getTransform().getPos().setX(0.0);
 
-        camera.getGLCamera().getTransform().getPos().setY(50.0);
+        camera.getGLCamera().getTransform().getPos().setY(10.0);
 
-        camera.getGLCamera().getTransform().getRotation().setX(-89.0);
+        camera.getGLCamera().getTransform().getRotation().setX(0.0);
 
         while (context.getGraphicsDriver().loop()){
             long current_time = System.currentTimeMillis();

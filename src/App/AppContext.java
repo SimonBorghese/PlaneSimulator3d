@@ -3,7 +3,6 @@ package App;
 import Data.DataDriver;
 import Graphics.GraphicsDriver;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -70,7 +69,7 @@ public class AppContext {
      * Checks to see if the context's process list has a specified class
      * @return The desired class provided, null if it doesn't exist
      */
-    public AppProcess findAppProcess(Class<AppProcess> processClass) {
+    public AppProcess findAppProcess(Class<? extends AppProcess> processClass) {
         AppProcess foundProcess = null;
         for (AppProcess appProcess : appProcesses) {
             if (foundProcess != null){

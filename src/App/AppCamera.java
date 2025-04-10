@@ -94,6 +94,18 @@ public class AppCamera implements AppProcess{
                     movement_delta = movement_delta.plus(cam_right.mul(-1.0f));
                     break;
                 }
+                case GLFW.GLFW_KEY_UP:{
+                    double x =camera.getTransform().getRotation().getX();
+                    x += rotation_speed * dt;
+                    camera.getTransform().getRotation().setX(x);
+                    break;
+                }
+                case GLFW.GLFW_KEY_DOWN:{
+                    double x =camera.getTransform().getRotation().getX();
+                    x -= rotation_speed * dt;
+                    camera.getTransform().getRotation().setX(x);
+                    break;
+                }
                 default: {
                     break;
                 }

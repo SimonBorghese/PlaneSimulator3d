@@ -98,8 +98,8 @@ public class WorldCoordinate {
         Vector point = toPoint(tileSize);
         double scale = Math.pow(2, zoom + offset.getZ());
 
-        double x = Math.floor((point.getX() * scale) / tileSize);
-        double y = Math.floor((point.getY() * scale) / tileSize);
+        double x = ((point.getX() * scale) / tileSize);
+        double y = ((point.getY() * scale) / tileSize);
 
         return new Vector(x + offset.getX(), y+offset.getY(), zoom + offset.getZ());
     }
