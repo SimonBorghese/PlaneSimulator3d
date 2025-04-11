@@ -71,7 +71,7 @@ public class WorldProcess implements AppProcess{
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
                 Vector initial_pos = initial.toPoint(256, zoom);
-                thread.setLocation(new WorldCoordinate(((int)initial_pos.getX()) - x, ((int) initial_pos.getY()) + y*2, zoom), new Vector(x,y,0), zoom ,1);
+                thread.setLocation(new WorldCoordinate(((int)initial_pos.getX()) - x, ((int) initial_pos.getY()) + y*2, zoom), new Vector(-x,-y,0), zoom ,1);
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
                 thread.start();
 
