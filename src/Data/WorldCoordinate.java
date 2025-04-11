@@ -15,9 +15,15 @@ import Math.Vector;
  * Internally these are stored as latitude and longitude as that's a more usable format to the user
  */
 public class WorldCoordinate {
-    // The lat and longitude values stores internally
-    private double latitude;
-    private double longitude;
+    /**
+     * A vector representing the provided longitude and latitude coordinates
+     */
+    private Vector latlng;
+
+    /**
+     * A vector representing the potentially provided tile coordinates
+     */
+    private Vector coordinates;
 
     /**
      * The offset for the XYZ zoom point of this world coordinate, useful for fine tuning satellite images
@@ -103,6 +109,13 @@ public class WorldCoordinate {
 
         return new Vector(x + offset.getX(), y+offset.getY(), zoom + offset.getZ());
     }
+
+    /**
+     * Convert Latitude and Longitude coordinates to a point
+     * @param lat The latitude coordinates, in the range -90, 90
+     * @param lng The longitude coordinates, in the range -180, 180
+     * @throws InvalidParameterException If lat or lng are not within valid ranges
+     */
 
     public double getLatitude() {
         return latitude;

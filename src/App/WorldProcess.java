@@ -67,11 +67,11 @@ public class WorldProcess implements AppProcess{
         for (int y = -1; y < 2; y++){
             coordinateThreads.put(y, new HashMap<>());
             HashMap<Integer, WorldGenerationThread> horizontal_lines = coordinateThreads.get(y);
-            for (int x = -1; x < 3; x++){
+            for (int x = -1; x < 2; x++){
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
                 Vector initial_pos = initial.toPoint(256, zoom);
-                thread.setLocation(new WorldCoordinate(((int)initial_pos.getX()) - x, ((int) initial_pos.getY()) + y*2, zoom), new Vector(-x,-y,0), zoom ,1);
+                thread.setLocation(new WorldCoordinate(((int)initial_pos.getX()), ((int) initial_pos.getY()), zoom), new Vector(x,y,0), zoom ,1);
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
                 thread.start();
 
@@ -219,7 +219,7 @@ public class WorldProcess implements AppProcess{
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
                 Vector initial_pos = initial.toPoint(256, zoom);
-                thread.setLocation(new WorldCoordinate(initial_pos.getX() - x, initial_pos.getY() - y, zoom), new Vector(x,y,0), zoom ,1);
+                thread.setLocation(new WorldCoordinate(initial_pos.getX(), initial_pos.getY(), zoom), new Vector(x,y,0), zoom ,1);
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
 
                 //thread.start();
@@ -232,7 +232,7 @@ public class WorldProcess implements AppProcess{
             WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
             Vector initial_pos = initial.toPoint(256, zoom);
-            thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() - y, zoom),new Vector(x,y,0), zoom ,1);
+            thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),new Vector(x,y,0), zoom ,1);
             System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
             //thread.start();
 

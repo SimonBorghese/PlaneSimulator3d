@@ -70,7 +70,7 @@ public class AppDriver {
         // Note: The data driver is always configured from the constructor of the data driver
 
         // Add our processes to our AppDriver
-        camera = new AppCamera(100.0f, 10.0f);
+        camera = new AppCamera(100.0f, 100.0f);
         initializeAndAppend(camera);
 
         // TODO REMOVE ME!!!
