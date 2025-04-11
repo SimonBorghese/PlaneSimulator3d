@@ -70,8 +70,8 @@ public class WorldProcess implements AppProcess{
             for (int x = -1; x < 2; x++){
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
-                Vector initial_pos = initial.toPoint(256, zoom);
-                thread.setLocation(new WorldCoordinate(((int)initial_pos.getX()), ((int) initial_pos.getY()), zoom), new Vector(x,y,0), zoom ,1);
+                Vector initial_pos = initial.getTile();
+                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
                 thread.start();
 
@@ -218,11 +218,12 @@ public class WorldProcess implements AppProcess{
             } else{
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
-                Vector initial_pos = initial.toPoint(256, zoom);
-                thread.setLocation(new WorldCoordinate(initial_pos.getX(), initial_pos.getY(), zoom), new Vector(x,y,0), zoom ,1);
+                Vector initial_pos = initial.getTile();
+                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
+
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
 
-                //thread.start();
+                thread.start();
 
                 horizontal_lines.put(x, thread);
             }
@@ -231,10 +232,10 @@ public class WorldProcess implements AppProcess{
             horizontal_lines = coordinateThreads.get(Integer.valueOf(y));
             WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
-            Vector initial_pos = initial.toPoint(256, zoom);
-            thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),new Vector(x,y,0), zoom ,1);
+            Vector initial_pos = initial.getTile();
+            thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
             System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
-            //thread.start();
+            thread.start();
 
             horizontal_lines.put(x, thread);
         }
@@ -337,19 +338,19 @@ public class WorldProcess implements AppProcess{
                 throw new InvalidParameterException("WorldProcess parameters not set before execution");
             }
 
-            Vector base_loc = location.toPoint(256, zoom);
+            Vector base_loc = location.getTile();
             WorldCoordinate up = new WorldCoordinate(base_loc.getX(), base_loc.getY() + 1, zoom);
             WorldCoordinate down = new WorldCoordinate(base_loc.getX(), base_loc.getY() - 1, zoom);
             WorldCoordinate left = new WorldCoordinate(base_loc.getX() - 1, base_loc.getY(), zoom);
             WorldCoordinate right = new WorldCoordinate(base_loc.getX() + 1, base_loc.getY(), zoom);
 
-            double max_long = up.getLongitude();
-            double min_long = down.getLongitude();
-            double max_lat = right.getLatitude();
-            double min_lat = left.getLatitude();
+            double max_long = up.getWorldCoordinate().getY();
+            double min_long = down.getWorldCoordinate().getY();
+            double max_lat = right.getWorldCoordinate().getX();
+            double min_lat = left.getWorldCoordinate().getX();
 
-            double base_lat = location.getLatitude();
-            double base_long = location.getLongitude();
+            double base_lat = location.getWorldCoordinate().getX();
+            double base_long = location.getWorldCoordinate().getY();
 
             double delta_lat = (max_lat - min_lat)  / 2.0;
             double delta_lon = (max_long - min_long) / 2.0;
@@ -393,7 +394,7 @@ public class WorldProcess implements AppProcess{
                 throw new InvalidParameterException("Zoom must be greater than zero, location and offset cannot be null, and elevation resolution must be > 0");
             }
             this.offset = offset;
-            Vector loc_point = location.toPoint(256, zoom);
+            Vector loc_point = location.getTile();
             this.location = new WorldCoordinate(loc_point.getX(), loc_point.getY(), zoom);
             this.zoom = zoom;
             this.elevation_res = elevation_res;

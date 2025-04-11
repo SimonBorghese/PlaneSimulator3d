@@ -82,8 +82,8 @@ public class DataDriver {
             for (int j = (512*i); j < (coordinates.size() - (512 * i)); j++){
                 WorldCoordinate coordinate = coordinates.get(j + (512 * i));
 
-                rawCoordinates.add(String.format("%.7f", coordinate.getLatitude()));
-                rawCoordinates.add(String.format("%.7f", coordinate.getLongitude()));
+                rawCoordinates.add(String.format("%.7f", coordinate.getWorldCoordinate().getX()));
+                rawCoordinates.add(String.format("%.7f", coordinate.getWorldCoordinate().getY()));
             }
 
             // Send and parse the result
@@ -104,7 +104,7 @@ public class DataDriver {
      */
     public Image getSatalliteImage(WorldCoordinate coordinate, double zoom) throws ConfigurationException{
         try {
-            byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.toPoint(256, zoom));
+            byte[] jpeg_bytes = inetDriver.getSatalliteImage(coordinate.getTile());
 
             try {
                 return decodeImage(jpeg_bytes);

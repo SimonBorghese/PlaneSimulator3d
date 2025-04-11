@@ -91,7 +91,7 @@ public class AppDriver {
         }
 
         // Add our world process
-        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 9);
+        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng, 256, 9), 9);
         initializeAndAppend(worldProcess);
 
 

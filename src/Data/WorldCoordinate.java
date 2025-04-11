@@ -26,12 +26,28 @@ public class WorldCoordinate {
     private Vector coordinates;
 
     /**
-     * The offset for the XYZ zoom point of this world coordinate, useful for fine tuning satellite images
+     * Construct a world coordinate based on a provided, real, latitude and longitude value
+     * @param lat Provided, valid Latitude
+     * @param lng Provided, valid Longitude
+     * @param tile_size Tile size for derived tile
+     * @param zoom The zoom for the derived tile
+     * @throws java.security.InvalidParameterException If the latitude and longitude values are not valid for Earth
      */
-    private Vector offset;
+    public WorldCoordinate(double lat, double lng, int tile_size, int zoom){
+        if (lat < -90.0 || lat > 90.0){
+            throw new InvalidParameterException("Range check for latitude failed!");
+        }
+        if (lng < -180.0 || lng > 180.0){
+            throw new InvalidParameterException("Range check for longitude failed!");
+        }
+        latlng = new Vector(lat,lng);
+        coordinates = convertGenericPointToTile(convertWorldToGenericPoint(lat,lng), tile_size, zoom);
+
+    }
 
     /**
-     * Construct a world coordinate based on a provided, real, latitude and longitude value
+     * Construct a world coordinate based on a provided, real, latitude and longitude values with
+     * generic tile size and zoom
      * @param lat Provided, valid Latitude
      * @param lng Provided, valid Longitude
      * @throws java.security.InvalidParameterException If the latitude and longitude values are not valid for Earth
@@ -43,36 +59,20 @@ public class WorldCoordinate {
         if (lng < -180.0 || lng > 180.0){
             throw new InvalidParameterException("Range check for longitude failed!");
         }
-        latitude = lat;
-        longitude = lng;
-
-        offset = new Vector();
+        latlng = new Vector(lat,lng);
+        coordinates = convertGenericPointToTile(convertWorldToGenericPoint(lat,lng), 256, 15);
     }
 
     /**
-     * Construct a world coordinate from an X,Y position and scale from the tile API.
-     * VERY EXPENSIVE OPERATION!!!
-     * @throws InvalidParameterException If the result generates an invalid coordinate
+     * Construct a world coordinate using a tile.
+     * @param x The x position of the tile
+     * @param y THe y position of the tile
+     * @param zoom The zoom provided to generate the tile
      */
     public WorldCoordinate(double x, double y, double zoom){
-        double s = Math.pow(2.0, zoom);
+        coordinates = new Vector(x,y,zoom);
+        latlng = convertTileToWorld(coordinates);
 
-        double latitude =
-                360 * (-0.25 + ((1/Math.PI) * (Math.atan(Math.pow(Math.E, -(Math.PI * (((y*2)/s)-1)))))));
-
-        double longitude =
-                360 * (-0.5 + (x/s));
-
-        if (latitude < -90.0 || latitude > 90.0){
-            throw new InvalidParameterException("Generated Tile doesn't exist in the X axis!");
-        }
-        if (longitude < -180.0 || longitude > 180.0){
-            throw new InvalidParameterException("Generated Tile doesn't exist in the Y axis!");
-        }
-        this.latitude = latitude;
-        this.longitude = longitude;
-
-        offset = new Vector();
     }
 
     /**
@@ -80,64 +80,82 @@ public class WorldCoordinate {
      */
     public WorldCoordinate(){
         // Denver Colorado as provided by the Google API example
-        this(39.7391536, -104.9847034);
+        // At a tile size of 256 and zoom 15
+        this(39.7391536, -104.9847034, 256, 15);
     }
 
     /**
-     * Convert this coordinate to a point used for the Tile API
-     * FROM GOOGLE'S DOCS: https://developers.google.com/maps/documentation/tile/2d-tiles-overview
-     * @return A Vector representing the point
-     */
-    public Vector toPoint(double tileSize){
-        double mercator = -Math.log(Math.tan((0.25 + latitude / 360.0) * Math.PI));
-        double x = tileSize * (longitude / 360.0 + 0.5);
-        double y = tileSize / 2 * (1 + mercator / Math.PI);
-        return new Vector(x, y);
-    }
-
-    /**
-     * Convert this coordinate to a tile cord used for the Tile API
-     * FROM GOOGLE'S DOCS: https://developers.google.com/maps/documentation/tile/2d-tiles-overview
-     * @return A Vector representing the tile cord where Z is zoom
-     */
-    public Vector toPoint(double tileSize, double zoom){
-        Vector point = toPoint(tileSize);
-        double scale = Math.pow(2, zoom + offset.getZ());
-
-        double x = ((point.getX() * scale) / tileSize);
-        double y = ((point.getY() * scale) / tileSize);
-
-        return new Vector(x + offset.getX(), y+offset.getY(), zoom + offset.getZ());
-    }
-
-    /**
-     * Convert Latitude and Longitude coordinates to a point
+     * Convert Latitude and Longitude coordinates to a point WITHOUT consideration of tile size.
+     * Must be multiplied by tile size to become an actual point
      * @param lat The latitude coordinates, in the range -90, 90
      * @param lng The longitude coordinates, in the range -180, 180
      * @throws InvalidParameterException If lat or lng are not within valid ranges
      */
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLatitude(double newLat){
-        latitude = newLat;
-    }
-
-    public void setLongitude(double newLng){
-        longitude = newLng;
+    private static Vector convertWorldToGenericPoint(double lat, double lng){
+        double mercator = -Math.log(Math.tan((0.25 + lat / 360.0) * Math.PI));
+        double x = 1 * (lng / 360.0 + 0.5);
+        double y = (1.0 / 2.0) * (1 + mercator / Math.PI);
+        return new Vector(x, y,0);
     }
 
     /**
-     * Get a pointer to the Vector for the offset
-     * @return The pointer to the offset vector
+     * Convert a generic point to a specific tile
+     * @param point A "generic" point
+     * @param tile_size The tile size, usually 256
+     * @param zoom The level of zoom
+     * @return A vector for the specific tile, Z is zoom
      */
-    public Vector getOffset(){
-        return offset;
+    private static Vector convertGenericPointToTile(Vector point, int tile_size, int zoom){
+        Vector out_point = new Vector(point.getX(), point.getY(), point.getZ());
+        out_point.setX(point.getX() * tile_size);
+        out_point.setY(point.getY() * tile_size);
+
+        double scale = Math.pow(2, zoom);
+
+        double x = ((out_point.getX() * scale) / tile_size);
+        double y = ((out_point.getY() * scale) / tile_size);
+
+        return new Vector(x,y,zoom);
+    }
+
+    /**
+     * Convert a tile to a latitude and longitude
+     * @param tile The vector of the tile, z is zoom
+     * @throws InvalidParameterException If the tile doesn't result in a latitude or longitude
+     * @return The latitude and longitude, z is zero
+     */
+    private static Vector convertTileToWorld(Vector tile){
+        double s = Math.pow(2.0, tile.getZ());
+
+        double latitude =
+                360 * (-0.25 + ((1/Math.PI) * (Math.atan(Math.pow(Math.E, -(Math.PI * (((tile.getY()*2)/s)-1)))))));
+
+        double longitude =
+                360 * (-0.5 + (tile.getX()/s));
+
+        if (latitude < -90.0 || latitude > 90.0){
+            throw new InvalidParameterException("Generated Tile doesn't exist in the X axis!");
+        }
+        if (longitude < -180.0 || longitude > 180.0){
+            throw new InvalidParameterException("Generated Tile doesn't exist in the Y axis!");
+        }
+
+        return new Vector(latitude, longitude, 0);
+    }
+
+    /**
+     * Get either the provided world coordinate or generated one. Guaranteed for at least one to exist
+     * @return A vector containing the world coordinates, x = latitude, y = longitude,z = 0
+     */
+    public Vector getWorldCoordinate(){
+        return latlng;
+    }
+
+    /**
+     * Get either the provided tile coordinates or the generated ones, Guaranteed for at least one to exist.
+     * @return A Vector containing the tile coordinates, z = zoom
+     */
+    public Vector getTile(){
+        return coordinates;
     }
 }
