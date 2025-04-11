@@ -43,6 +43,11 @@ public class WorldProcess implements AppProcess{
     private HashMap<Integer, HashMap<Integer, WorldGenerationThread>> coordinateThreads;
 
     /**
+     * TODO FIX OR FIND BETTER SOLUTION!
+     */
+    private HashMap<WorldCoordinate, Float> globalElevations;
+
+    /**
      * Construct this WorldProcess with a provided base location
      * @param initial The initial world coordinate we start from
      * @param zoom The 0 level zoom for this world
@@ -55,6 +60,9 @@ public class WorldProcess implements AppProcess{
         this.initial = initial;
         this.zoom = zoom;
         coordinateThreads = new HashMap<>();
+
+        // TODO: REMOVE ME
+        globalElevations = new HashMap<>();
     }
 
     /**
@@ -71,7 +79,7 @@ public class WorldProcess implements AppProcess{
                 WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
                 Vector initial_pos = initial.getTile();
-                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
+                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,2);
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
                 thread.start();
 
@@ -108,28 +116,35 @@ public class WorldProcess implements AppProcess{
             for (WorldGenerationThread thread : horzintal_rows.values()){
                 if (thread.isReady && !thread.isFinished){
                     Vector thread_offset = thread.getOffset();
-                    /*
+
                     HashMap<WorldCoordinate, Float> result_cords = thread.getElevations();
 
-                    double lat_min = result_cords.keySet().stream().toList().getFirst().getLatitude();
-                    double lat_max = result_cords.keySet().stream().toList().getFirst().getLatitude();
+                    for (Map.Entry<WorldCoordinate, Float> entry : result_cords.entrySet()){
+                        Vector tile = entry.getKey().getTile();
+                        WorldCoordinate generic_tile = new WorldCoordinate(tile.getY(), tile.getX(), 0);
+                        generic_tile.makeTileFromGeneric(256, zoom);
+                        globalElevations.put(generic_tile, entry.getValue());
+                    }
 
-                    double lng_min = result_cords.keySet().stream().toList().getFirst().getLongitude();
-                    double lng_max = result_cords.keySet().stream().toList().getFirst().getLongitude();
+                    double lat_min = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getX();
+                    double lat_max = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getX();
+
+                    double lng_min = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getY();
+                    double lng_max = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getY();
 
                     double min_elevation = result_cords.values().stream().toList().getFirst();
 
                     for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()) {
-                        lat_min = Math.min(lat_min, cord.getKey().getLatitude());
-                        lat_max = Math.max(lat_max, cord.getKey().getLatitude());
+                        lat_min = Math.min(lat_min, cord.getKey().getWorldCoordinate().getX());
+                        lat_max = Math.max(lat_max, cord.getKey().getWorldCoordinate().getX());
 
-                        lng_min = Math.min(lng_min, cord.getKey().getLongitude());
-                        lng_max = Math.max(lng_max, cord.getKey().getLongitude());
+                        lng_min = Math.min(lng_min, cord.getKey().getWorldCoordinate().getY());
+                        lng_max = Math.max(lng_max, cord.getKey().getWorldCoordinate().getY());
 
                         min_elevation = Math.min(min_elevation, cord.getValue());
                     }
 
-                     */
+
                     // Create a tessilated square
                     double constant_factor = 1000.0;
 
@@ -149,24 +164,26 @@ public class WorldProcess implements AppProcess{
                         for (int j = 0; j < resolution; j++) {
                             vertexes.add((float) (-resolution / 2.0 + i));
                             double result_y = 0.0;
-                            /*
-                            for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()) {
-                                double pos_x = (lat_max - cord.getKey().getLatitude()) / (lat_max - lat_min);
-                                double pos_y = (lng_max - cord.getKey().getLongitude()) / (lng_max - lng_min);
 
-                                double radius_x = ((double) j / (double) resolution) - pos_x;
-                                double radius_y = ((double) i / (double) resolution) - pos_y;
+                            for (Map.Entry<WorldCoordinate, Float> cord : globalElevations.entrySet()) {
+                                double pos_x = (lat_max - cord.getKey().getWorldCoordinate().getX()) / (lat_max - lat_min);
+                                double pos_y = (lng_max - cord.getKey().getWorldCoordinate().getY()) / (lng_max - lng_min);
+
+                                double radius_x = ((double) j / (double) resolution) + (pos_x);
+                                double radius_y = ((double) i / (double) resolution) + (pos_y);
+
+                                System.out.printf("Offset x: %d y: %d\n", (int) (thread_offset.getX() - cord.getKey().getTile().getX()), (int) (thread_offset.getY() - cord.getKey().getTile().getY()));
 
                                 double radius = Math.sqrt(Math.pow(radius_x, 2) + Math.pow(radius_y, 2));
                                 double r_sqr = Math.pow(radius, 2);
 
-                                double dist = (cord.getValue() / (min_elevation)) * (1 / (r_sqr * constant_factor));
+                                double dist = (cord.getValue() / (min_elevation)) * (1 / Math.max(1.0, r_sqr * constant_factor));
                                 result_y += dist;
-                                //System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
+                                System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
                             }
 
-                             */
-                            vertexes.add((float) (0.0));
+
+                            vertexes.add((float) (result_y));
                             vertexes.add((float) (-resolution / 2.0 + j));
 
                             vertexes.add((float) (-((float) (-resolution / 2.0 + i)
@@ -223,7 +240,7 @@ public class WorldProcess implements AppProcess{
 
                 System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
 
-                thread.start();
+                //thread.start();
 
                 horizontal_lines.put(x, thread);
             }
@@ -235,7 +252,7 @@ public class WorldProcess implements AppProcess{
             Vector initial_pos = initial.getTile();
             thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
             System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
-            thread.start();
+            //thread.start();
 
             horizontal_lines.put(x, thread);
         }
@@ -368,7 +385,7 @@ public class WorldProcess implements AppProcess{
                 }
             }
 
-            //result_elevation = dataDriver.getElevationData(cords);
+            result_elevation = dataDriver.getElevationData(cords);
 
             try {
                 result_image = dataDriver.getSatalliteImage(location, zoom);

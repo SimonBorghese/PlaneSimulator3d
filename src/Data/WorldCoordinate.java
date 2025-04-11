@@ -40,7 +40,7 @@ public class WorldCoordinate {
         if (lng < -180.0 || lng > 180.0){
             throw new InvalidParameterException("Range check for longitude failed!");
         }
-        latlng = new Vector(lat,lng);
+        latlng = new Vector(lat,lng, 0);
         coordinates = convertGenericPointToTile(convertWorldToGenericPoint(lat,lng), tile_size, zoom);
 
     }
@@ -59,8 +59,8 @@ public class WorldCoordinate {
         if (lng < -180.0 || lng > 180.0){
             throw new InvalidParameterException("Range check for longitude failed!");
         }
-        latlng = new Vector(lat,lng);
-        coordinates = convertGenericPointToTile(convertWorldToGenericPoint(lat,lng), 256, 15);
+        latlng = new Vector(lat,lng, 0);
+        coordinates = convertWorldToGenericPoint(lat,lng);
     }
 
     /**
@@ -82,6 +82,14 @@ public class WorldCoordinate {
         // Denver Colorado as provided by the Google API example
         // At a tile size of 256 and zoom 15
         this(39.7391536, -104.9847034, 256, 15);
+    }
+
+    /**
+     * Convert the tile coordinate, interpreted as a generic point when only latitude and longitude are provided,
+     * to a proper 2d tile
+     */
+    public void makeTileFromGeneric(int tile_size, int zoom){
+        coordinates = convertGenericPointToTile(coordinates, tile_size, zoom);
     }
 
     /**
@@ -128,10 +136,10 @@ public class WorldCoordinate {
         double s = Math.pow(2.0, tile.getZ());
 
         double latitude =
-                360 * (-0.25 + ((1/Math.PI) * (Math.atan(Math.pow(Math.E, -(Math.PI * (((tile.getY()*2)/s)-1)))))));
+                360 * (-0.25 + ((1/Math.PI) * (Math.atan(Math.pow(Math.E, -(Math.PI * (((tile.getX()*2)/s)-1)))))));
 
         double longitude =
-                360 * (-0.5 + (tile.getX()/s));
+                360 * (-0.5 + (tile.getY()/s));
 
         if (latitude < -90.0 || latitude > 90.0){
             throw new InvalidParameterException("Generated Tile doesn't exist in the X axis!");
