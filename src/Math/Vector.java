@@ -183,4 +183,23 @@ public class Vector {
     public double getLength(){
         return Math.sqrt(Math.pow(x, 2.0) + Math.pow(y, 2.0) + Math.pow(z, 2.0));
     }
+
+    /**
+     * Find the distance between this vector and another vector
+     * @param other The other vector to compare against
+     * @return A double representing the distance between these two locations
+     */
+    public double getDistance(Vector other){
+        return Math.sqrt(Math.pow(other.getX() - x, 2.0)
+                + Math.pow(other.getY() - y, 2.0)
+                + Math.pow(other.getZ() - z, 2.0));
+    }
+
+    /**
+     * Return a float array of this Vector where 0 = x 1 = y 2 = z
+     * @return A float array, 3 items long
+     */
+    public float[] getRawArray(){
+        return new float[]{(float) x, (float) y, (float) z};
+    }
 }

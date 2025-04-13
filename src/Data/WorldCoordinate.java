@@ -72,7 +72,6 @@ public class WorldCoordinate {
     public WorldCoordinate(double x, double y, double zoom){
         coordinates = new Vector(x,y,zoom);
         latlng = convertTileToWorld(coordinates);
-
     }
 
     /**
@@ -149,6 +148,25 @@ public class WorldCoordinate {
         }
 
         return new Vector(latitude, longitude, 0);
+    }
+
+    /**
+     * Find the bounds of this tile, this will throw nonsense values if this coordinate doesn't have a tile
+     * configured with a zoom.
+     * @return The extent of this tile, x = distance, in latitude, from the center of the tile to the edge, y =
+     * distance, in longitude, from the center of the tile to the edge. Z = 0
+     */
+    public Vector findBounds(){
+        Vector tile = getTile();
+        Vector world_coordinate = getWorldCoordinate();
+        // The difference between the center latitudes of this and the right adjacent tile, divided by 2 to get radius
+        double lat = (convertTileToWorld(new Vector(tile.getX() + 1, tile.getY(), tile.getZ())).getX()
+                - world_coordinate.getX()) / 2.0;
+
+        double lng = (convertTileToWorld(new Vector(tile.getX(), tile.getY()+1, tile.getZ())).getY()
+                - world_coordinate.getY()) / 2.0;
+
+        return new Vector(lat, lng, 0);
     }
 
     /**

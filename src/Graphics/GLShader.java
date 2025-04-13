@@ -20,18 +20,33 @@ public class GLShader extends GLObject{
      */
 
     /**
+     * Whether to enable the depth test for this pipeline, defaults to true
+     */
+    private boolean depthTest;
+
+    /**
      * The GLShader constructor shouldn't do anything, it's bad practice since we don't know EXACTLY when its executed
      */
     public GLShader(){
         // -1 should be considered invalid in our application
         handle = -1;
+
+        depthTest = true;
+    }
+
+    /**
+     * Set the value of the depth test
+     * @param param A boolean, true to enable depth test
+     */
+    public void setDepthTest(boolean param){
+        depthTest = param;
     }
 
     /**
      * Create a shader program from a provided vertex and fragment shader
      * Here's hoping we won't need any other shader stages
      * @param vertex Raw ASCII of the vertex shader. Should NOT BE IN JAVA UTF-16!!!!!11
-     * @param fragment Raw ASCII of the vertex shader. Should NOT BE IN JAVA UTF-16!!!!!11
+     * @param fragment Raw ASCII of the fragment shader. Should NOT BE IN JAVA UTF-16!!!!!11
      * @throws InvalidParameterException If the shaders fail to compile or link
      */
     public void createProgram(String vertex, String fragment) throws InvalidParameterException {
@@ -80,10 +95,83 @@ public class GLShader extends GLObject{
     }
 
     /**
+     * Create a shader program from a provided vertex and fragment shader
+     * Here's hoping we won't need any other shader stages
+     * @param vertex Raw ASCII of the vertex shader. Should NOT BE IN JAVA UTF-16!!!!!11
+     * @param geometry Raw ASCII of the geometry shader. SHOULD NOT BE IN JAVA UTF-16!!!!11!!
+     * @param fragment Raw ASCII of the fragment shader. Should NOT BE IN JAVA UTF-16!!!!!11
+     * @throws InvalidParameterException If the shaders fail to compile or link
+     */
+    public void createProgram(String vertex, String geometry, String fragment) throws InvalidParameterException {
+        // Create our shader objects
+        int vertex_id = GL33.glCreateShader(GL33.GL_VERTEX_SHADER);
+        int fragment_id = GL33.glCreateShader(GL33.GL_FRAGMENT_SHADER);
+        int geometry_id = GL33.glCreateShader(GL33.GL_GEOMETRY_SHADER);
+
+        // Send the source code to the GPU driver
+        GL33.glShaderSource(vertex_id, vertex);
+        GL33.glShaderSource(fragment_id, fragment);
+        GL33.glShaderSource(geometry_id, geometry);
+
+        // Compile the shader
+        GL33.glCompileShader(vertex_id);
+        GL33.glCompileShader(fragment_id);
+        GL33.glCompileShader(geometry_id);
+
+        // Check the compile result
+        int vertex_result = getShaderCompile(vertex_id);
+        int fragment_result = getShaderCompile(fragment_id);
+        int geometry_result = getShaderCompile(geometry_id);
+
+        if (vertex_result == GL33.GL_FALSE){
+            throw throwShaderLog(vertex_id);
+        }
+
+        if (fragment_result == GL33.GL_FALSE){
+            throw throwShaderLog(fragment_id);
+        }
+
+        if (geometry_result == GL33.GL_FALSE){
+            throw throwShaderLog(geometry_id);
+        }
+
+        // Create a GPU program and link our shaders to it
+        int program = GL33.glCreateProgram();
+
+        GL33.glAttachShader(program, vertex_id);
+        GL33.glAttachShader(program, fragment_id);
+        GL33.glAttachShader(program, geometry_id);
+
+        // Link it
+        GL33.glLinkProgram(program);
+
+        if (getProgramCompile(program) == GL33.GL_FALSE){
+            throw throwProgramLog(program);
+        }
+
+        // Destroy the shader object
+        GL33.glDeleteShader(vertex_id);
+        GL33.glDeleteShader(fragment_id);
+        GL33.glDeleteShader(geometry_id);
+
+        handle = program;
+    }
+
+    /**
      * Activate the GPU program
      */
     public void useProgram(){
         GL33.glUseProgram(handle);
+
+        if (depthTest){
+            //GL33.glEnable(GL33.GL_DEPTH_TEST);
+            GL33.glDisable(GL33.GL_BLEND);
+        } else{
+            //GL33.glDisable(GL33.GL_DEPTH_TEST);
+            GL33.glEnable(GL33.GL_BLEND);
+            GL33.glBlendFunc(GL33.GL_DST_COLOR, GL33.GL_ADD);
+            GL33.glBlendFuncSeparate(GL33.GL_ONE, GL33.GL_ONE, GL33.GL_ONE, GL33.GL_ONE);
+        }
     }
 
     /**
@@ -107,7 +195,7 @@ public class GLShader extends GLObject{
     /**
      * Set a mat4x4 uniform
      * @param loc The uniform location
-     * @param param The integer to set
+     * @param param The matrix, should be a float array with atleast 16 floats
      * @throws InvalidParameterException If the parameter isn't an array atleast 16 floats long
      */
     public void setMatrixUniform(int loc, float[] param){
@@ -115,6 +203,32 @@ public class GLShader extends GLObject{
             throw new InvalidParameterException("Provided matrix is less than 4x4");
         }
         GL33.glUniformMatrix4fv(loc, false, param);
+    }
+
+    /**
+     * Set a vec3 uniform
+     * @param loc The uniform location
+     * @param param The vector to copy from, should be a float array with atleast 3 floats
+     * @throws InvalidParameterException If the parameter isn't an array atleast 3 floats long
+     */
+    public void setVec3Uniform(int loc, float[] param){
+        if (param.length < 3){
+            throw new InvalidParameterException("Provided matrix is less than 4x4");
+        }
+        GL33.glUniform3fv(loc, param);
+    }
+
+    /**
+     * Set a vec2 uniform
+     * @param loc The uniform location
+     * @param param The vector to copy from, should be a float array with atleast 2 floats
+     * @throws InvalidParameterException If the parameter isn't an array atleast 2 floats long
+     */
+    public void setVec2Uniform(int loc, float[] param){
+        if (param.length < 2){
+            throw new InvalidParameterException("Provided matrix is less than 4x4");
+        }
+        GL33.glUniform2fv(loc, param);
     }
 
     /**
@@ -199,7 +313,7 @@ public class GLShader extends GLObject{
      */
     @Override
     public void use(GraphicsContext context) {
-        GL33.glUseProgram(handle);
+        useProgram();
 
         // Set ourselves in the context
         context.setShader(this);

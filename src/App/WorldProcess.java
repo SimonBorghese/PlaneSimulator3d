@@ -4,13 +4,11 @@ import Data.DataDriver;
 import Data.WorldCoordinate;
 
 import java.security.InvalidParameterException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import Graphics.GLTransform;
+import Graphics.GraphicsDriver;
 import Math.Image;
 import Math.Transform;
 import Math.Vector;
@@ -65,6 +63,8 @@ public class WorldProcess implements AppProcess{
         globalElevations = new HashMap<>();
     }
 
+    // App Process related methods
+
     /**
      * Empty as there is nothing to initialize
      * @param context Unused
@@ -72,21 +72,72 @@ public class WorldProcess implements AppProcess{
      */
     @Override
     public void init(AppContext context) throws InvalidParameterException {
-        for (int y = -1; y < 2; y++){
-            coordinateThreads.put(y, new HashMap<>());
-            HashMap<Integer, WorldGenerationThread> horizontal_lines = coordinateThreads.get(y);
-            for (int x = -1; x < 2; x++){
-                WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
 
-                Vector initial_pos = initial.getTile();
-                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,2);
-                System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
-                thread.start();
+        coordinateThreads.put(0, new HashMap<>());
+        HashMap<Integer, WorldGenerationThread> horizontal_lines = coordinateThreads.get(0);
 
-                horizontal_lines.put(x, thread);
+        WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
+
+        Vector initial_pos = initial.getTile();
+        thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),new Vector(0,0,0), zoom ,2);
+        System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX(),(int) initial_pos.getY());
+        thread.start();
+
+        horizontal_lines.put(0, thread);
+
+    }
+
+    /**
+     * A private method to load a mesh from a ready thread
+     * @param thread The target thread to load from
+     * @throws InvalidParameterException If the thread is null or not ready
+     */
+    private void loadMesh(GraphicsDriver gDriver, WorldGenerationThread thread){
+        if (thread == null || !thread.isReady){
+            throw new InvalidParameterException("Provided thread for throwing mesh is either null or not-ready!");
+        }
+        Vector thread_offset = thread.getOffset();
+
+        WorldGenerationThread.HeightmapMesh[] meshes = thread.result_meshes;
+        Image[] images = thread.result_image;
+
+        int mesh_resolution = (int) Math.sqrt((double) Math.min(meshes.length, images.length));
+
+        for (int y = 0; y < mesh_resolution; y++) {
+            for (int x = 0; x < mesh_resolution; x++) {
+                int index = (y*mesh_resolution) + x;
+                Image img = images[index];
+                WorldGenerationThread.HeightmapMesh mesh = meshes[index];
+
+
+                gDriver.pushTexture(img);
+
+                Graphics.GLHeightmap test_mesh = new Graphics.GLHeightmap(10);
+
+                test_mesh.bindElementsForUse();
+
+                test_mesh.uploadVertices(mesh.vertices);
+
+                test_mesh.uploadElements(mesh.indices);
+
+                test_mesh.configureVertexArray();
+
+                Transform transform = new Transform();
+                transform.getPos().setX(((thread_offset.getX() * mesh_resolution) + x) * 9);
+                transform.getPos().setZ(((thread_offset.getY() * mesh_resolution) + y) * 9);
+                GLTransform glTransform = new GLTransform(transform);
+
+                gDriver.pushObject(glTransform);
+
+                gDriver.pushObject(test_mesh);
             }
         }
+
+
+        thread.isFinished = true;
     }
+
+
 
     /**
      * Read the camera's position and load in new tiles as needed
@@ -106,155 +157,13 @@ public class WorldProcess implements AppProcess{
             throw new IllegalStateException("No Camera in provided app process list!");
         }
         Vector pos = cam.getGLCamera().getTransform().getPos();
-        int resolution = 10;
-        int x = (int) Math.floor(pos.getX() / (double) (resolution/5));
-        int y = (int) Math.floor(pos.getZ() / (double) (resolution/5));
-
-        //System.out.printf("Checking: %d %d\n",x,y);
 
         for (HashMap<Integer, WorldGenerationThread> horzintal_rows : coordinateThreads.values()){
             for (WorldGenerationThread thread : horzintal_rows.values()){
                 if (thread.isReady && !thread.isFinished){
-                    Vector thread_offset = thread.getOffset();
-
-                    HashMap<WorldCoordinate, Float> result_cords = thread.getElevations();
-
-                    for (Map.Entry<WorldCoordinate, Float> entry : result_cords.entrySet()){
-                        Vector tile = entry.getKey().getTile();
-                        WorldCoordinate generic_tile = new WorldCoordinate(tile.getY(), tile.getX(), 0);
-                        generic_tile.makeTileFromGeneric(256, zoom);
-                        globalElevations.put(generic_tile, entry.getValue());
-                    }
-
-                    double lat_min = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getX();
-                    double lat_max = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getX();
-
-                    double lng_min = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getY();
-                    double lng_max = result_cords.keySet().stream().toList().getFirst().getWorldCoordinate().getY();
-
-                    double min_elevation = result_cords.values().stream().toList().getFirst();
-
-                    for (Map.Entry<WorldCoordinate, Float> cord : result_cords.entrySet()) {
-                        lat_min = Math.min(lat_min, cord.getKey().getWorldCoordinate().getX());
-                        lat_max = Math.max(lat_max, cord.getKey().getWorldCoordinate().getX());
-
-                        lng_min = Math.min(lng_min, cord.getKey().getWorldCoordinate().getY());
-                        lng_max = Math.max(lng_max, cord.getKey().getWorldCoordinate().getY());
-
-                        min_elevation = Math.min(min_elevation, cord.getValue());
-                    }
-
-
-                    // Create a tessilated square
-                    double constant_factor = 1000.0;
-
-                    float[] vertices = new float[(resolution+1)* (resolution+1) * 5];
-                    ArrayList<Float> vertexes = new ArrayList<>();
-                    int[] elements = new int[(resolution - 1) * resolution * 2];
-
-                    for (int i = 0; i < resolution - 1; i++) {
-                        for (int j = 0; j < resolution; j++) {
-                            for (int k = 0; k < 2; k++) {
-                                elements[(i * resolution * 2) + (j * 2) + k] = (j + resolution * (i + k));
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < resolution; i++) {
-                        for (int j = 0; j < resolution; j++) {
-                            vertexes.add((float) (-resolution / 2.0 + i));
-                            double result_y = 0.0;
-
-                            for (Map.Entry<WorldCoordinate, Float> cord : globalElevations.entrySet()) {
-                                double pos_x = (lat_max - cord.getKey().getWorldCoordinate().getX()) / (lat_max - lat_min);
-                                double pos_y = (lng_max - cord.getKey().getWorldCoordinate().getY()) / (lng_max - lng_min);
-
-                                double radius_x = ((double) j / (double) resolution) + (pos_x);
-                                double radius_y = ((double) i / (double) resolution) + (pos_y);
-
-                                System.out.printf("Offset x: %d y: %d\n", (int) (thread_offset.getX() - cord.getKey().getTile().getX()), (int) (thread_offset.getY() - cord.getKey().getTile().getY()));
-
-                                double radius = Math.sqrt(Math.pow(radius_x, 2) + Math.pow(radius_y, 2));
-                                double r_sqr = Math.pow(radius, 2);
-
-                                double dist = (cord.getValue() / (min_elevation)) * (1 / Math.max(1.0, r_sqr * constant_factor));
-                                result_y += dist;
-                                System.out.printf("Result cord: %f, Result: %f\n", cord.getValue(), dist);
-                            }
-
-
-                            vertexes.add((float) (result_y));
-                            vertexes.add((float) (-resolution / 2.0 + j));
-
-                            vertexes.add((float) (-((float) (-resolution / 2.0 + i)
-                                    + (resolution / 2.0)) / (float) (resolution -1)));
-                            vertexes.add((float) -((float) (-resolution / 2.0 + j)
-                                    + (resolution / 2.0)) / (float) (resolution -1));
-                        }
-                    }
-
-                    context.getGraphicsDriver().pushTexture(thread.getImage());
-
-                    Graphics.GLHeightmap test_mesh = new Graphics.GLHeightmap(10);
-
-                    test_mesh.bindElementsForUse();
-
-                    vertices = new float[vertexes.size()];
-                    for (int i =0; i < vertexes.size(); i++){
-                        vertices[i] = vertexes.get(i);
-                    }
-
-                    test_mesh.uploadVertices(vertices);
-
-                    test_mesh.uploadElements(elements);
-
-                    test_mesh.configureVertexArray();
-
-                    Transform transform = new Transform();
-                    transform.getPos().setX(thread_offset.getX() * 9);
-                    transform.getPos().setZ(thread_offset.getY() * 9);
-                    GLTransform glTransform = new GLTransform(transform);
-
-                    context.getGraphicsDriver().pushObject(glTransform);
-
-                    context.getGraphicsDriver().pushObject(test_mesh);
-
-                    thread.isFinished = true;
+                    loadMesh(context.getGraphicsDriver(), thread);
                 }
             }
-        }
-
-        HashMap<Integer, WorldGenerationThread> horizontal_lines = coordinateThreads.get(Integer.valueOf(y));
-        if (horizontal_lines != null){
-            WorldGenerationThread check_thread = horizontal_lines.get(Integer.valueOf(x));
-            // TODO: CHANGE ME TO A METHOD
-            if (check_thread != null){
-                if (check_thread.isReady && !check_thread.isFinished) {
-
-                }
-            } else{
-                WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
-
-                Vector initial_pos = initial.getTile();
-                thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
-
-                System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
-
-                //thread.start();
-
-                horizontal_lines.put(x, thread);
-            }
-        } else{
-            coordinateThreads.put(y, new HashMap<>());
-            horizontal_lines = coordinateThreads.get(Integer.valueOf(y));
-            WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
-
-            Vector initial_pos = initial.getTile();
-            thread.setLocation(new WorldCoordinate((int) initial_pos.getX() - x, (int)initial_pos.getY() + y, zoom),new Vector(x,y,0), zoom ,1);
-            System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX() - x,(int) initial_pos.getY() - y);
-            //thread.start();
-
-            horizontal_lines.put(x, thread);
         }
     }
 
@@ -297,7 +206,12 @@ public class WorldProcess implements AppProcess{
         /**
          * Our resultant image, should only be used after the thread finishes
          */
-        private Image result_image;
+        private Image[] result_image;
+
+        /**
+         * Our resultant meshes, should only be used after the thread finishes
+         */
+        private HeightmapMesh[] result_meshes;
 
         /**
          * A simple flag to check whether or not this thread is reasy
@@ -326,6 +240,9 @@ public class WorldProcess implements AppProcess{
             this.dataDriver = new DataDriver(dataDriver);
             isReady = false;
             isFinished = false;
+            result_image = new Image[9];
+            result_meshes = new HeightmapMesh[9];
+            result_elevation = new HashMap<>();
         }
 
         /**
@@ -335,27 +252,60 @@ public class WorldProcess implements AppProcess{
          */
         @Override
         public void run() {
-            readWorldElevation();
+            WorldCoordinate[] tiles = generateAdjacentTiles();
 
-            // Reads the image from the data driver
-            try {
-                result_image = dataDriver.getSatalliteImage(location, zoom);
-            } catch (ConfigurationException e) {
-                System.out.println("DataDriver improperly configured for thread!!!");
+            for (int i = 0; i < tiles.length; i++){
+                // Append the tile's elevation to the list
+                queryWorldElevation(tiles[i]);
+
+                try{
+                    // Append the coordinate's satellite images
+                    result_image[i] = dataDriver.getSatalliteImage(tiles[i], zoom);
+                } catch (ConfigurationException e) {
+                    throw new IllegalStateException("Failed to load a tile's satellite image!");
+                }
             }
+
+            for (int i = 0; i < tiles.length; i++){
+                // Append the tile's elevation to the list
+                result_meshes[i] = new HeightmapMesh(10, tiles[i]);
+
+                result_meshes[i].generateMesh(result_elevation.entrySet());
+            }
+
+            isReady = true;
         }
 
         /**
-         * This method should be called within a spawned thread.
-         * This method generates, reads from the API, then parses our world elevation
-         * This is then stored in the result_elevation variable
+         * A private method to generate 2x2 adjacent locations from the center location
+         * @return An array of four coordinates in the 4 tiles adjacent from the center
          */
-        private void readWorldElevation(){
-            if (location == null || zoom < 1 || elevation_res <= 0) {
-                throw new InvalidParameterException("WorldProcess parameters not set before execution");
+        private WorldCoordinate[] generateAdjacentTiles(){
+            WorldCoordinate[] offsets = new WorldCoordinate[9];
+            Vector base_location = initial.getTile();
+
+            for (int y = 0; y < 3; y++){
+                for (int x = 0; x < 3; x++){
+                    offsets[(y*3)+(x)] = new WorldCoordinate( base_location.getX() - (x-1),
+                            base_location.getY() + (y-1), zoom);
+                }
             }
 
-            Vector base_loc = location.getTile();
+            return offsets;
+        }
+
+        /**
+         * A private method to query then append to the elevation list for a specific world coordinate
+         * @param cord The world coordinate to query
+         * @throws InvalidParameterException If cord is null
+         */
+        private void queryWorldElevation(WorldCoordinate cord){
+            if (cord == null){
+                throw new InvalidParameterException("Provided coordinate for elevation is null!");
+            }
+
+            // Find the base tile location
+            Vector base_loc = cord.getTile();
             WorldCoordinate up = new WorldCoordinate(base_loc.getX(), base_loc.getY() + 1, zoom);
             WorldCoordinate down = new WorldCoordinate(base_loc.getX(), base_loc.getY() - 1, zoom);
             WorldCoordinate left = new WorldCoordinate(base_loc.getX() - 1, base_loc.getY(), zoom);
@@ -366,8 +316,8 @@ public class WorldProcess implements AppProcess{
             double max_lat = right.getWorldCoordinate().getX();
             double min_lat = left.getWorldCoordinate().getX();
 
-            double base_lat = location.getWorldCoordinate().getX();
-            double base_long = location.getWorldCoordinate().getY();
+            double base_lat = cord.getWorldCoordinate().getX();
+            double base_long = cord.getWorldCoordinate().getY();
 
             double delta_lat = (max_lat - min_lat)  / 2.0;
             double delta_lon = (max_long - min_long) / 2.0;
@@ -385,17 +335,7 @@ public class WorldProcess implements AppProcess{
                 }
             }
 
-            result_elevation = dataDriver.getElevationData(cords);
-
-            try {
-                result_image = dataDriver.getSatalliteImage(location, zoom);
-            } catch (ConfigurationException e) {
-                // TODO FIX ME!!!!!
-                throw new RuntimeException(e);
-            }
-
-            System.out.println("THREAD READY!");
-            isReady = true;
+            result_elevation.putAll(dataDriver.getElevationData(cords));
         }
 
         /**
@@ -419,9 +359,13 @@ public class WorldProcess implements AppProcess{
 
         /**
          * Return our current image, may be null, may be invalid. But wont be either if the thread has run
+         * 0 = bottom left
+         * 1 = bottom right
+         * 2 = top left
+         * 3 = top right
          * @return An Image from the satellite API
          */
-        public Image getImage(){
+        public Image[] getImages(){
             return result_image;
         }
 
@@ -442,6 +386,124 @@ public class WorldProcess implements AppProcess{
             return offset;
         }
 
+        /**
+         * A class holding a heightmap mesh
+         */
+        private class HeightmapMesh{
+            /**
+             * Our buffer of vertices
+             */
+            private float[] vertices;
 
+            /**
+             * Our indices for our heightmaps
+             */
+            private int[] indices;
+
+            /**
+             * The resolution of the height map
+             */
+            private int resolution;
+
+            /**
+             * The base world coordinate for this mesh
+             */
+            private WorldCoordinate base;
+
+            /**
+             * Constructor to initialize our heightmap with a specific resolution
+             * @param res The resolution of the heightmap, determines the length of vertices and indices
+             * @param location The base location of this mesh
+             */
+            public HeightmapMesh(int res, WorldCoordinate location){
+                this.resolution = res;
+                this.base = location;
+                this.indices = new int[(res - 1) * res * 2];
+                this.vertices = new float[res * res * 5];
+            }
+
+            /**
+             * Generate this mesh using a list of elevations, derived from the hash map of elevations for all adjacent
+             * tiles
+             * @param elevations A Set of WorldCoordinates and Elevations
+             */
+            public void generateMesh(Set<Map.Entry<WorldCoordinate, Float>> elevations){
+                initializeElements();
+
+                double elevation_min = elevations.stream().findFirst().get().getValue();
+                double elevation_max = elevation_min;
+
+                for (Map.Entry<WorldCoordinate, Float> cord : elevations){
+                    elevation_min = Math.min(elevation_min, cord.getValue());
+                    elevation_max = Math.max(elevation_max, cord.getValue());
+                }
+
+                int index = 0;
+                for (int i = 0; i < resolution; i++) {
+                    for (int j = 0; j < resolution; j++) {
+                        vertices[index] = (float) (-resolution / 2.0 + i);
+
+                        double result_y = 0.0;
+
+                        // Radius of our own location
+                        Vector location_bounds = base.findBounds();
+                        Vector world_location = base.getWorldCoordinate();
+
+                        double constant_factor = 0.001;
+                        double dist_factor = 100.0;
+
+                        // First, find the position of this tile, relative to itself (i.e., 0,0 is the center)
+
+                        double radius_x = (((-resolution / 2.0 + i) / resolution) - 0.5) * 2.0;
+                        double radius_y = (((-resolution / 2.0 + j) / resolution) - 0.5) * 2.0;
+
+                        double lat_offset = radius_x * Math.abs(location_bounds.getX());
+                        double lng_offset = radius_y * Math.abs(location_bounds.getY());
+
+                        double latitude = world_location.getX() + lat_offset;
+                        double longitude = world_location.getY() + lng_offset;
+
+
+                        // Construct the latitude and longitude
+                        Vector latlng = new Vector(latitude,
+                                longitude, 0);
+
+                        for (Map.Entry<WorldCoordinate, Float> cord : elevations) {
+
+                            double dist = latlng.getDistance(cord.getKey().getWorldCoordinate());
+
+                            double final_dist = constant_factor * (Math.abs(elevation_max - cord.getValue() / (elevation_max - elevation_min)) * (1 / Math.max(1.0, Math.pow(dist_factor * dist,2))));
+
+                            result_y += final_dist;
+                        }
+
+                        vertices[index+1] = (float) (result_y);
+                        vertices[index+2] = (float) (-resolution / 2.0 + j);
+
+                        vertices[index+3] = (float) (-((float) (-resolution / 2.0 + i)
+                                + (resolution / 2.0)) / (float) (resolution -1));
+                        vertices[index+4] = (float) -((float) (-resolution / 2.0 + j)
+                                + (resolution / 2.0)) / (float) (resolution -1);
+
+                        index += 5;
+                    }
+                }
+            }
+
+            /**
+             * Create the list of elements for this heightmap
+             */
+            private void initializeElements(){
+                for (int i = 0; i < resolution - 1; i++) {
+                    for (int j = 0; j < resolution; j++) {
+                        for (int k = 0; k < 2; k++) {
+                            indices[(i * resolution * 2) + (j * 2) + k] = (j + resolution * (i + k));
+                        }
+                    }
+                }
+            }
+        }
     }
+
+
 }
