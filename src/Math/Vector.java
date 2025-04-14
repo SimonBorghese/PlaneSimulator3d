@@ -118,6 +118,16 @@ public class Vector {
     }
 
     /**
+     * Set this vector to all the same scalar value
+     * @param scalar The value to set this vector to
+     */
+    public void setScalar(double scalar){
+        this.x = scalar;
+        this.y = scalar;
+        this.z = scalar;
+    }
+
+    /**
      * Normalize this vector
      */
     public void normalize(){

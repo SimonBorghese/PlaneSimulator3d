@@ -17,13 +17,29 @@ public class Transform {
     private Vector rotation;
 
     /**
+     * The amount to scale this transform
+     */
+    private Vector scale;
+
+    /**
+     * Construct this transform with provided transformation values
+     * @param pos The 3d position of this transform
+     * @param rotation The eulars rotation
+     * @param scale The scale of this transform
+     */
+    public Transform(Vector pos, Vector rotation, Vector scale) {
+        this.pos = pos;
+        this.rotation = rotation;
+        this.scale = scale;
+    }
+
+    /**
      * Construct this transform with provided transformation values
      * @param pos The 3d position of this transform
      * @param rotation The eulars rotation
      */
     public Transform(Vector pos, Vector rotation) {
-        this.pos = pos;
-        this.rotation = rotation;
+        this(pos, rotation, new Vector(1,1,1));
     }
 
     /**
@@ -59,5 +75,13 @@ public class Transform {
      */
     public Vector getRotation() {
         return rotation;
+    }
+
+    /**
+     * Get a pointer to the transform's scale
+     * @return A pointer to the current scale of this transform
+     */
+    public Vector getScale(){
+        return scale;
     }
 }

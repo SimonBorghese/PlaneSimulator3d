@@ -32,13 +32,19 @@ public class WorldProcess implements AppProcess{
     private int zoom;
 
     /**
+     * The number of levels to zoom out by
+     */
+    private int zoom_out;
+
+    /**
      * A list holding tile locations and their WorldGenerationThread
      * If no key exist, it hasn't loaded
      * If the key exist and the thread isn't running, it is ready
      * If the key exist and the thread is running then the data is still being parsed
      */
     //private HashMap<Map.Entry<Integer, Integer>, WorldGenerationThread> coordinateThreads;
-    private HashMap<Integer, HashMap<Integer, WorldGenerationThread>> coordinateThreads;
+            // Zoom level, Y offset, X offset, Thread
+    private HashMap<Integer, HashMap<Integer, HashMap<Integer, WorldGenerationThread>>> coordinateThreads;
 
     /**
      * TODO FIX OR FIND BETTER SOLUTION!
@@ -49,14 +55,16 @@ public class WorldProcess implements AppProcess{
      * Construct this WorldProcess with a provided base location
      * @param initial The initial world coordinate we start from
      * @param zoom The 0 level zoom for this world
+     * @param zoom_out The number of zoom levels to move up
      * @throws InvalidParameterException If initial is null
      */
-    public WorldProcess(WorldCoordinate initial, int zoom) {
+    public WorldProcess(WorldCoordinate initial, int zoom, int zoom_out) {
         if (initial == null){
             throw new InvalidParameterException("Initial world coordinate for a WorldProcess must not be null");
         }
         this.initial = initial;
         this.zoom = zoom;
+        this.zoom_out = zoom_out;
         coordinateThreads = new HashMap<>();
 
         // TODO: REMOVE ME
@@ -72,27 +80,30 @@ public class WorldProcess implements AppProcess{
      */
     @Override
     public void init(AppContext context) throws InvalidParameterException {
+        WorldCoordinate initial_15 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                initial.getWorldCoordinate().getY(), 256, zoom);
+        WorldCoordinate initial_14 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                initial.getWorldCoordinate().getY(), 256, zoom-1);
+        WorldCoordinate initial_13 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                initial.getWorldCoordinate().getY(), 256, zoom-2);
+        WorldCoordinate initial_12 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                initial.getWorldCoordinate().getY(), 256, zoom-3);
 
-        coordinateThreads.put(0, new HashMap<>());
-        HashMap<Integer, WorldGenerationThread> horizontal_lines = coordinateThreads.get(0);
 
-        WorldGenerationThread thread = new WorldGenerationThread(context.getDataDriver());
-
-        Vector initial_pos = initial.getTile();
-        thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),new Vector(0,0,0), zoom ,2);
-        System.out.printf("Looking at: %d %d\n", (int) initial_pos.getX(),(int) initial_pos.getY());
-        thread.start();
-
-        horizontal_lines.put(0, thread);
-
+        spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
+        spawnMesh(context.getDataDriver(), initial_14, new Vector(0,0,0), zoom-1);
+        spawnMesh(context.getDataDriver(), initial_13, new Vector(0,0,0), zoom-2);
+        spawnMesh(context.getDataDriver(), initial_12, new Vector(0,0,0), zoom-3);
     }
 
     /**
      * A private method to load a mesh from a ready thread
+     * @param gDriver The graphics driver to push the mesh to
      * @param thread The target thread to load from
+     * @param zoom The zoom level of this mesh
      * @throws InvalidParameterException If the thread is null or not ready
      */
-    private void loadMesh(GraphicsDriver gDriver, WorldGenerationThread thread){
+    private void loadMesh(GraphicsDriver gDriver, WorldGenerationThread thread, int zoom){
         if (thread == null || !thread.isReady){
             throw new InvalidParameterException("Provided thread for throwing mesh is either null or not-ready!");
         }
@@ -103,9 +114,10 @@ public class WorldProcess implements AppProcess{
 
         int mesh_resolution = (int) Math.sqrt((double) Math.min(meshes.length, images.length));
 
-        for (int y = 0; y < mesh_resolution; y++) {
-            for (int x = 0; x < mesh_resolution; x++) {
-                int index = (y*mesh_resolution) + x;
+        int mesh_res_range = (int) Math.floor((double) mesh_resolution / 2.0);
+        for (int y = -mesh_res_range; y <= mesh_res_range; y++) {
+            for (int x = -mesh_res_range; x <= mesh_res_range; x++) {
+                int index = ((y + mesh_res_range) * mesh_resolution) + (x+mesh_res_range);
                 Image img = images[index];
                 WorldGenerationThread.HeightmapMesh mesh = meshes[index];
 
@@ -122,9 +134,18 @@ public class WorldProcess implements AppProcess{
 
                 test_mesh.configureVertexArray();
 
+                // Scale this transform and move it down by the zoom level
+                int zoom_offset = this.zoom - zoom;
+                int zoom_scale = (int) Math.pow(2, zoom_offset);
+
                 Transform transform = new Transform();
-                transform.getPos().setX(((thread_offset.getX() * mesh_resolution) + x) * 9);
-                transform.getPos().setZ(((thread_offset.getY() * mesh_resolution) + y) * 9);
+                transform.getPos().setX((thread_offset.getX() + 1) * x - (zoom_scale * (0.2 / mesh_resolution)));
+                transform.getPos().setZ((thread_offset.getY() + 1) * y - (zoom_scale * (0.2 / mesh_resolution)));
+
+                transform.getScale().setScalar(zoom_scale*10);
+
+                transform.getPos().setY(-0.01 * zoom_offset);
+
                 GLTransform glTransform = new GLTransform(transform);
 
                 gDriver.pushObject(glTransform);
@@ -133,8 +154,35 @@ public class WorldProcess implements AppProcess{
             }
         }
 
-
         thread.isFinished = true;
+    }
+
+    /**
+     * This method spawns a thread at a position with zoom
+     * @param dDriver The data driver to pass to copy to the thread
+     * @param location A vector based offset.
+     * @param zoom The zoom to create a tile from
+     */
+    private void spawnMesh(DataDriver dDriver, WorldCoordinate location, Vector offset, int zoom){
+        if (!coordinateThreads.containsKey(zoom)){
+            coordinateThreads.put(zoom, new HashMap<>());
+        }
+
+        HashMap<Integer, HashMap<Integer, WorldGenerationThread>> zoom_group = coordinateThreads.get(zoom);
+
+        if (!zoom_group.containsKey((int) offset.getX())){
+            zoom_group.put((int) offset.getX(), new HashMap<>());
+        }
+        HashMap<Integer, WorldGenerationThread> horizontal_lines = zoom_group.get((int) offset.getX());
+
+        WorldGenerationThread thread = new WorldGenerationThread(dDriver);
+
+        Vector initial_pos = location.getTile();
+        thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),
+                new Vector(offset.getX(), offset.getY(), 0), zoom ,2);
+        thread.start();
+
+        horizontal_lines.put((int) offset.getY(), thread);
     }
 
 
@@ -156,12 +204,13 @@ public class WorldProcess implements AppProcess{
         if (cam == null){
             throw new IllegalStateException("No Camera in provided app process list!");
         }
-        Vector pos = cam.getGLCamera().getTransform().getPos();
 
-        for (HashMap<Integer, WorldGenerationThread> horzintal_rows : coordinateThreads.values()){
-            for (WorldGenerationThread thread : horzintal_rows.values()){
-                if (thread.isReady && !thread.isFinished){
-                    loadMesh(context.getGraphicsDriver(), thread);
+        for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, WorldGenerationThread>>> zoom_layer : coordinateThreads.entrySet()) {
+            for (HashMap<Integer, WorldGenerationThread> horizontal_rows : zoom_layer.getValue().values()) {
+                for (WorldGenerationThread thread : horizontal_rows.values()) {
+                    if (thread.isReady && !thread.isFinished) {
+                        loadMesh(context.getGraphicsDriver(), thread, zoom_layer.getKey());
+                    }
                 }
             }
         }
@@ -282,7 +331,7 @@ public class WorldProcess implements AppProcess{
          */
         private WorldCoordinate[] generateAdjacentTiles(){
             WorldCoordinate[] offsets = new WorldCoordinate[9];
-            Vector base_location = initial.getTile();
+            Vector base_location = this.location.getTile();
 
             for (int y = 0; y < 3; y++){
                 for (int x = 0; x < 3; x++){
@@ -441,7 +490,7 @@ public class WorldProcess implements AppProcess{
                 int index = 0;
                 for (int i = 0; i < resolution; i++) {
                     for (int j = 0; j < resolution; j++) {
-                        vertices[index] = (float) (-resolution / 2.0 + i);
+                        vertices[index] = (float) (-resolution / 2.0 + i) / (float) (resolution -1);
 
                         double result_y = 0.0;
 
@@ -469,16 +518,17 @@ public class WorldProcess implements AppProcess{
                                 longitude, 0);
 
                         for (Map.Entry<WorldCoordinate, Float> cord : elevations) {
-
                             double dist = latlng.getDistance(cord.getKey().getWorldCoordinate());
 
-                            double final_dist = constant_factor * (Math.abs(elevation_max - cord.getValue() / (elevation_max - elevation_min)) * (1 / Math.max(1.0, Math.pow(dist_factor * dist,2))));
+                            double final_dist = constant_factor *
+                                    (Math.abs((elevation_max - cord.getValue()) / (elevation_max - elevation_min))
+                                            * (1 / Math.max(1.0, Math.pow(dist_factor * dist,2))));
 
                             result_y += final_dist;
                         }
 
-                        vertices[index+1] = (float) (result_y);
-                        vertices[index+2] = (float) (-resolution / 2.0 + j);
+                        vertices[index+1] = (float) (0.0);
+                        vertices[index+2] = (float) (-resolution / 2.0 + j) / (float) (resolution -1);
 
                         vertices[index+3] = (float) (-((float) (-resolution / 2.0 + i)
                                 + (resolution / 2.0)) / (float) (resolution -1));

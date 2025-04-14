@@ -44,8 +44,9 @@ public class GLTransform extends GLObject {
 
         Matrix model = new Matrix();
 
-        model.rotate(transform.getRotation().toGLM().getArray());
-        model.translate(transform.getPos().toGLM().getArray());
+        model.scale(transform.getScale().getRawArray());
+        model.rotate(transform.getRotation().getRawArray());
+        model.translate(transform.getPos().getRawArray());
 
         int model_loc = context.getShader().getUniformLocation("model");
         context.getShader().setMatrixUniform(model_loc, model.getRawMatrix());
