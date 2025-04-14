@@ -192,21 +192,6 @@ public class InternetDriver {
             System.out.printf("[WARNING!!!!!!!!] There has been %d elevation queries from a limit of %d which, " +
                     "after this call will become %d queries!!!!!\n",
                     num_queries_elevation, MAX_ELEVATION_QUERIES, num_queries_elevation + cords.size());
-
-            System.out.println("To continue, enter \"continue\" into the prompt below or \"quit\" to quit!");
-
-            String input = "";
-            Scanner scn = new Scanner(System.in);
-            while (!input.equalsIgnoreCase("continue") && !input.equalsIgnoreCase("quit")){
-                input = scn.next();
-                // Skip to next line
-                scn.nextLine();
-            }
-
-            if (input.equalsIgnoreCase("quit")){
-                System.out.println("Exiting due to too many elevation queries!");
-                System.exit(0);
-            }
         }
         // Google defines a list of cords as "[Lat1],[Long1]|[Lat2],[Long2]|...[LatN],[LongN}"
         StringJoiner parameter_generation = new StringJoiner("%7C");
