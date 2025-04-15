@@ -205,6 +205,33 @@ public class WorldProcess implements AppProcess{
             throw new IllegalStateException("No Camera in provided app process list!");
         }
 
+        // Iterate through each zoom level, determine the offset
+        for (int z = zoom; z >= (zoom - zoom_out); z--){
+            int scale = (int) Math.pow(2, zoom - z);
+
+            int x_offset = (int) (cam.getGLCamera().getTransform().getPos().getX() / (3 * scale));
+            int y_offset = (int) (cam.getGLCamera().getTransform().getPos().getZ() / (3 * scale));
+
+            //System.out.printf("Z: %d X: %d Y: %d\n", z, x_offset, y_offset);
+
+            /**
+            if (!coordinateThreads.containsKey(z) ||
+                    !coordinateThreads.get(z).containsKey(x_offset) ||
+                        !coordinateThreads.get(z).get(x_offset).containsKey(y_offset)){
+
+                Vector bounds = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                        initial.getWorldCoordinate().getY(), 256, z).findBounds();
+
+                WorldCoordinate initial_wc = new WorldCoordinate(
+                        initial.getWorldCoordinate().getX() + (bounds.getX() * x_offset),
+                        initial.getWorldCoordinate().getY() + (bounds.getY() * y_offset), 256, z);
+
+
+                //spawnMesh(context.getDataDriver(), initial_wc, new Vector(x_offset,y_offset,0), z);
+            }
+             **/
+        }
+
         for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, WorldGenerationThread>>> zoom_layer : coordinateThreads.entrySet()) {
             for (HashMap<Integer, WorldGenerationThread> horizontal_rows : zoom_layer.getValue().values()) {
                 for (WorldGenerationThread thread : horizontal_rows.values()) {
@@ -305,7 +332,7 @@ public class WorldProcess implements AppProcess{
 
             for (int i = 0; i < tiles.length; i++){
                 // Append the tile's elevation to the list
-                queryWorldElevation(tiles[i]);
+                //queryWorldElevation(tiles[i]);
 
                 try{
                     // Append the coordinate's satellite images
@@ -479,12 +506,17 @@ public class WorldProcess implements AppProcess{
             public void generateMesh(Set<Map.Entry<WorldCoordinate, Float>> elevations){
                 initializeElements();
 
-                double elevation_min = elevations.stream().findFirst().get().getValue();
-                double elevation_max = elevation_min;
+                double elevation_min = 0.0;
+                double elevation_max = 0.0;
 
-                for (Map.Entry<WorldCoordinate, Float> cord : elevations){
-                    elevation_min = Math.min(elevation_min, cord.getValue());
-                    elevation_max = Math.max(elevation_max, cord.getValue());
+                if (!elevations.stream().findFirst().isEmpty()) {
+                    elevation_min = elevations.stream().findFirst().get().getValue();
+                    elevation_max = elevation_min;
+
+                    for (Map.Entry<WorldCoordinate, Float> cord : elevations) {
+                        elevation_min = Math.min(elevation_min, cord.getValue());
+                        elevation_max = Math.max(elevation_max, cord.getValue());
+                    }
                 }
 
                 int index = 0;

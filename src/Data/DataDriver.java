@@ -13,9 +13,7 @@ import org.lwjgl.stb.STBImage;
 import javax.imageio.ImageIO;
 import javax.naming.ConfigurationException;
 import java.awt.image.BufferedImage;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.rmi.UnexpectedException;
 import java.security.InvalidParameterException;
@@ -110,9 +108,20 @@ public class DataDriver {
                 return decodeImage(jpeg_bytes);
             } catch (UnexpectedException e) {
                 System.out.println("Google failed to provide a valid image!");
+
+                FileWriter error_image = new FileWriter(String.format("error_result_%d", System.currentTimeMillis()));
+
+                char[] raw_chars = new char[jpeg_bytes.length];
+
+                for (int b = 0; b < jpeg_bytes.length; b++){
+                    raw_chars[b] = (char) jpeg_bytes[b];
+                }
+
+                error_image.write(raw_chars);
+
                 throw new RuntimeException("Google API returned an invalid image!");
             }
-        } catch (ConfigurationException e) {
+        } catch (ConfigurationException | IOException e) {
             System.out.println("Failed to get satallite image, probably an API key issue!");
             throw new ConfigurationException("API or Session Key misconfiguration!");
         }
