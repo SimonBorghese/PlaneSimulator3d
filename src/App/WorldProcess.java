@@ -91,9 +91,9 @@ public class WorldProcess implements AppProcess{
 
 
         spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
-        spawnMesh(context.getDataDriver(), initial_14, new Vector(0,0,0), zoom-1);
-        spawnMesh(context.getDataDriver(), initial_13, new Vector(0,0,0), zoom-2);
-        spawnMesh(context.getDataDriver(), initial_12, new Vector(0,0,0), zoom-3);
+        //spawnMesh(context.getDataDriver(), initial_14, new Vector(0,0,0), zoom-1);
+        //spawnMesh(context.getDataDriver(), initial_13, new Vector(0,0,0), zoom-2);
+        //spawnMesh(context.getDataDriver(), initial_12, new Vector(0,0,0), zoom-3);
     }
 
     /**
@@ -144,7 +144,9 @@ public class WorldProcess implements AppProcess{
 
                 transform.getScale().setScalar(zoom_scale*10);
 
-                transform.getPos().setY(-0.01 * zoom_offset);
+                //transform.getScale().setY(((zoom_scale * 10 * 4) - (zoom_offset)) * 0.3);
+
+                transform.getPos().setY(-0.001 * zoom_offset);
 
                 GLTransform glTransform = new GLTransform(transform);
 
@@ -179,7 +181,7 @@ public class WorldProcess implements AppProcess{
 
         Vector initial_pos = location.getTile();
         thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),
-                new Vector(offset.getX(), offset.getY(), 0), zoom ,2);
+                new Vector(offset.getX(), offset.getY(), 0), zoom ,4);
         thread.start();
 
         horizontal_lines.put((int) offset.getY(), thread);
@@ -530,7 +532,7 @@ public class WorldProcess implements AppProcess{
                         Vector location_bounds = base.findBounds();
                         Vector world_location = base.getWorldCoordinate();
 
-                        double constant_factor = 0.001;
+                        double constant_factor = 0.1;
                         double dist_factor = 100.0;
 
                         // First, find the position of this tile, relative to itself (i.e., 0,0 is the center)
@@ -559,7 +561,7 @@ public class WorldProcess implements AppProcess{
                             result_y += final_dist;
                         }
 
-                        vertices[index+1] = (float) (0.0);
+                        vertices[index+1] = (float) (result_y / (double) elevation_res);
                         vertices[index+2] = (float) (-resolution / 2.0 + j) / (float) (resolution -1);
 
                         vertices[index+3] = (float) (-((float) (-resolution / 2.0 + i)

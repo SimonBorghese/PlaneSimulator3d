@@ -32,6 +32,20 @@ public class GLTransform extends GLObject {
     }
 
     /**
+     * Construct a model matrix from this transform
+     * @return A Matrix containing this transform
+     */
+    public Matrix constructTransform(){
+        Matrix model = new Matrix();
+
+        model.scale(transform.getScale().getRawArray());
+        model.rotate(transform.getRotation().getRawArray());
+        model.translate(transform.getPos().getRawArray());
+
+        return model;
+    }
+
+    /**
      * Bind this transform to the currently bound shader's model uniform
      * @param context A context of the currently bound objects is provided to assist in preparing and execution
      * @throws java.security.InvalidParameterException If there is no shader in the context
@@ -42,11 +56,7 @@ public class GLTransform extends GLObject {
             throw new InvalidParameterException("No shader provided to GLTransform on use!");
         }
 
-        Matrix model = new Matrix();
-
-        model.scale(transform.getScale().getRawArray());
-        model.rotate(transform.getRotation().getRawArray());
-        model.translate(transform.getPos().getRawArray());
+        Matrix model = constructTransform();
 
         int model_loc = context.getShader().getUniformLocation("model");
         context.getShader().setMatrixUniform(model_loc, model.getRawMatrix());

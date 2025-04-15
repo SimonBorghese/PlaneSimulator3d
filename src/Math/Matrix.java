@@ -7,12 +7,10 @@
 package Math;
 
 import java.security.InvalidParameterException;
-import java.util.Arrays;
 
 // I dunno why
 import glm_.*;
 import glm_.mat4x4.Mat4;
-import glm_.quat.Quat;
 import glm_.vec3.Vec3;
 
 /**
@@ -153,6 +151,19 @@ public class Matrix {
             throw new InvalidParameterException("Vector is not 3 floats long");
         }
         matrix = matrix.scale(new Vec3(scale[0], scale[1], scale[2]));
+    }
+
+    /**
+     * Multiply this matrix by another matrix
+     * @param other The other matrix to multiply by, should not be null
+     * @throws InvalidParameterException If the other matrix is null
+     */
+    public void multiply(Matrix other){
+        if (other == null){
+            throw new InvalidParameterException("Provided Matrix for multiplication is null!");
+        }
+
+        matrix = matrix.times(other.matrix);
     }
 
 

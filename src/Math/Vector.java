@@ -212,4 +212,19 @@ public class Vector {
     public float[] getRawArray(){
         return new float[]{(float) x, (float) y, (float) z};
     }
+
+    /**
+     * Hash this vector
+     * @return
+     */
+    @Override
+    public int hashCode() {
+        short discard_factor = 0x3FF;
+
+        short element_1 = (short) (Double.doubleToRawLongBits(x) & discard_factor);
+        short element_2 = (short) (Double.doubleToRawLongBits(y) & discard_factor);
+        short element_3 = (short) (Double.doubleToRawLongBits(z) & discard_factor);
+
+        return (element_1 << 20) & (element_2 << 10) & element_3;
+    }
 }

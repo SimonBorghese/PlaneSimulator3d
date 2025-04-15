@@ -91,7 +91,7 @@ public class AppDriver {
         }
 
         // Add our world process
-        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 15, 3);
+        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 9, 3);
         initializeAndAppend(worldProcess);
 
         //HeightMapProcess heightMapProcess = new HeightMapProcess();

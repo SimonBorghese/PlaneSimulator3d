@@ -13,5 +13,6 @@ void main(){
     float r = distance(f_vertex, f_point);
         vec3 f_color = (f_vertex + vec3(0.5, 0.5, 0.5)) / 2.0;
 
-        FragColor = vec4(vec3(length(f_color / (4.0 * (pow(r,2) + 1.0)))), 1.0);
+        //FragColor = vec4(vec3(length(f_color / (Math.pow(pow(r,2) + 1.0)))), 1.0);
+        FragColor = vec4(vec3(f_point.y / max(r*r, 1.0)), 1.0);
 }
