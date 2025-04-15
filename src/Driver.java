@@ -10,10 +10,8 @@ import Launcher.*;
 
 public class Driver {
     public static void main(String[] args){
-        Launcher launcher = new Launcher(800,600);
+        Launcher launcher = new Launcher(800,800);
 
         launcher.init();
-
-
     }
 }

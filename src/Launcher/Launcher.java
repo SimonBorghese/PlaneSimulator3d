@@ -3,9 +3,7 @@ package Launcher;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +21,16 @@ public class Launcher {
      * The panel for the map to select on
      */
     private MapPanel map_panel;
+
+    /**
+     * The panel for the launching portion
+     */
+    private LaunchPanel launch_panel;
+
+    /**
+     * The button to launch the program
+     */
+    private JButton launch_button;
 
     /**
      * Our font for our big text
@@ -52,6 +60,11 @@ public class Launcher {
 
         // Create our map panel
         map_panel = new MapPanel(frame.getWidth(), frame.getHeight());
+
+        launch_panel = new LaunchPanel();
+
+        // Create the launch button
+        launch_button = new JButton("Launch!");
     }
 
     /**
@@ -66,14 +79,53 @@ public class Launcher {
         title.setFont(textFont);
         frame.add(title);
 
-        JLabel instructions = new JLabel("Click somewhere!");
+        JLabel instructions = new JLabel(" Click somewhere!");
         instructions.setFont(smallTextFont);
         frame.add(instructions);
         frame.add(map_panel);
 
+        launch_button.addActionListener(new AppLauncher());
+        launch_panel.add(launch_button);
+
+
+        frame.add(launch_panel);
+
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         map_panel.addMouseMotionListener(new MouseUpdater());
         frame.setVisible(true);
+    }
+
+    private class AppLauncher implements ActionListener{
+        /**
+         * Empty constructpr
+         */
+        public AppLauncher(){
+
+        }
+
+        /**
+         * When this action is called, the app is launched
+         * @param actionEvent unused
+         */
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            double lat = map_panel.getLat();
+            double lng = map_panel.getLng();
+
+            // Santiy check for NaN
+            if ((lat < -91.0 && lat > 91.0) || lat == Double.NaN) {
+                new Utils.ErrorPopup("SELECT A VALID LOCATION!");
+                return;
+            }
+
+            int window_width = launch_panel.getWindowWidth();
+            int window_height = launch_panel.getWindowHeight();
+
+            if (window_width <= 0 || window_height <= 0){
+                new Utils.ErrorPopup("ENTER VALID WINDOW DIMENSIONS!");
+                return;
+            }
+        }
     }
 
     /**
@@ -91,7 +143,11 @@ public class Launcher {
 
         @Override
         public void mouseMoved(MouseEvent mouseEvent) {
-            System.out.printf("Lat: %f Lng: %f\n", map_panel.getLat(), map_panel.getLng());
+            // Santiy check for NaN
+            if (map_panel.getLat() > -91.0 && map_panel.getLat() < 91.0) {
+                System.out.printf("Lat: %f Lng: %f\n", map_panel.getLat(), map_panel.getLng());
+                launch_panel.setLocation(map_panel.getLat(), map_panel.getLng());
+            }
         }
     }
 
