@@ -1,5 +1,7 @@
 package Launcher;
 
+import App.AppDriver;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -125,6 +127,18 @@ public class Launcher {
                 new Utils.ErrorPopup("ENTER VALID WINDOW DIMENSIONS!");
                 return;
             }
+
+            // Spawn a thread for this process. We don't really need to do anything for the thread
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    AppDriver app = new AppDriver(window_width, window_height);
+
+                    app.init(lat,lng);
+
+                    app.loop();
+                }
+            }).start();
         }
     }
 

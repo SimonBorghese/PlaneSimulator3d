@@ -63,7 +63,7 @@ public class AppDriver {
     /**
      * Initialize the AppDriver with the constructed objects. This should be called before any other method
      */
-    public void init(){
+    public void init(double lat, double lng){
         // Initialize the graphics driver
         context.getGraphicsDriver().init();
 
@@ -73,29 +73,9 @@ public class AppDriver {
         camera = new AppCamera(100.0f, 100.0f);
         initializeAndAppend(camera);
 
-        // TODO REMOVE ME!!!
-
-        double[][] heightmap = new double[10][10];
-        double lat = 37.80187;
-        double lng = -79.27461;
-        ArrayList<WorldCoordinate> cords = new ArrayList<>();
-
-        for (int x = -2; x < 2; x++){
-            for (int y = -2; y < 2; y++){
-                double lat_p = (double) x * (0.001) + lat;
-                double lng_p = (double) y * (0.001) + lng;
-                cords.add(
-                        new WorldCoordinate(lat_p, lng_p)
-                );
-            }
-        }
-
         // Add our world process
         WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 9, 3);
         initializeAndAppend(worldProcess);
-
-        //HeightMapProcess heightMapProcess = new HeightMapProcess();
-        //initializeAndAppend(heightMapProcess);
 
     }
 
