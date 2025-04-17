@@ -90,10 +90,10 @@ public class WorldProcess implements AppProcess{
                 initial.getWorldCoordinate().getY(), 256, zoom-3);
 
 
-        spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
+        //spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
         //spawnMesh(context.getDataDriver(), initial_14, new Vector(0,0,0), zoom-1);
         //spawnMesh(context.getDataDriver(), initial_13, new Vector(0,0,0), zoom-2);
-        //spawnMesh(context.getDataDriver(), initial_12, new Vector(0,0,0), zoom-3);
+        spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
     }
 
     /**
@@ -136,17 +136,23 @@ public class WorldProcess implements AppProcess{
 
                 // Scale this transform and move it down by the zoom level
                 int zoom_offset = this.zoom - zoom;
-                int zoom_scale = (int) Math.pow(2, zoom_offset);
+                int zoom_scale = (int) Math.pow(2, 3);
+                int zoom_scale2 = (int) Math.pow(2, zoom - this.zoom);
 
                 Transform transform = new Transform();
-                transform.getPos().setX((thread_offset.getX() + 1) * x - (zoom_scale * (0.2 / mesh_resolution)));
-                transform.getPos().setZ((thread_offset.getY() + 1) * y - (zoom_scale * (0.2 / mesh_resolution)));
+
+                //Vector offset = initial.determineZoomOffset(new Vector(), this.zoom - 3, zoom);
+
+                //System.out.printf("Offset: %f %f\n", offset.getX(), offset.getY());
+
+                transform.getPos().setX(((thread_offset.getX() + 1 + x) - (zoom_scale * (0.2 / mesh_resolution))));
+                transform.getPos().setZ(((thread_offset.getY() + 1 + y)  - (zoom_scale * (0.2 / mesh_resolution))));
 
                 transform.getScale().setScalar(zoom_scale*10);
 
                 //transform.getScale().setY(((zoom_scale * 10 * 4) - (zoom_offset)) * 0.3);
 
-                transform.getPos().setY(-0.001 * zoom_offset);
+                transform.getPos().setY(-0.002 * zoom_offset);
 
                 GLTransform glTransform = new GLTransform(transform);
 
@@ -208,31 +214,31 @@ public class WorldProcess implements AppProcess{
         }
 
         // Iterate through each zoom level, determine the offset
-        for (int z = zoom; z >= (zoom - zoom_out); z--){
-            int scale = (int) Math.pow(2, zoom - z);
+        //for (int z = zoom; z >= (zoom - zoom_out); z--){
+            int scale = (int) Math.pow(2, zoom );
 
-            int x_offset = (int) (cam.getGLCamera().getTransform().getPos().getX() / (3 * scale));
-            int y_offset = (int) (cam.getGLCamera().getTransform().getPos().getZ() / (3 * scale));
+            int x_offset = (int) ((cam.getGLCamera().getTransform().getPos().getX() * 4) / (scale));
+            int y_offset = (int) ((cam.getGLCamera().getTransform().getPos().getZ() * 4) / (scale));
 
             //System.out.printf("Z: %d X: %d Y: %d\n", z, x_offset, y_offset);
 
-            /**
-            if (!coordinateThreads.containsKey(z) ||
-                    !coordinateThreads.get(z).containsKey(x_offset) ||
-                        !coordinateThreads.get(z).get(x_offset).containsKey(y_offset)){
+        WorldCoordinate initial_12 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
+                initial.getWorldCoordinate().getY(), 256, zoom);
 
-                Vector bounds = new WorldCoordinate(initial.getWorldCoordinate().getX(),
-                        initial.getWorldCoordinate().getY(), 256, z).findBounds();
+           // if (!coordinateThreads.containsKey(z) ||
+                    if (!coordinateThreads.get(zoom).containsKey(x_offset) ||
+                        !coordinateThreads.get(zoom).get(x_offset).containsKey(y_offset)){
 
                 WorldCoordinate initial_wc = new WorldCoordinate(
-                        initial.getWorldCoordinate().getX() + (bounds.getX() * x_offset),
-                        initial.getWorldCoordinate().getY() + (bounds.getY() * y_offset), 256, z);
+                        initial_12.getTile().getX() + x_offset,
+                        initial_12.getTile().getY() + y_offset,
+                        (double) zoom);
 
 
-                //spawnMesh(context.getDataDriver(), initial_wc, new Vector(x_offset,y_offset,0), z);
+                spawnMesh(context.getDataDriver(), initial_wc, new Vector(x_offset,y_offset,0), zoom);
             }
-             **/
-        }
+
+        //}
 
         for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, WorldGenerationThread>>> zoom_layer : coordinateThreads.entrySet()) {
             for (HashMap<Integer, WorldGenerationThread> horizontal_rows : zoom_layer.getValue().values()) {

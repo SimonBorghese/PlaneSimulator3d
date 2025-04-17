@@ -170,6 +170,76 @@ public class WorldCoordinate {
     }
 
     /**
+     * This recursive method determines the offset from the center of a grid of tiles for a zoom level.
+     * This is necessary because latitude and longitude are not linear, a tile of zoom and a larger tile of zoom-1 will
+     * NOT align if the tile of zoom is placed at the center. It must be offset. When three or more tiles are used,
+     * offsets must also be applied to lower levels of tiles. This method takes the current world coordinate and finds
+     * where a tile of the same position but of zoom-1 would be offset to align. The method is recursive, starting
+     * at the provided max zoom which will be the outermost tile and move until the desired zoom is reached. If the max
+     * and target zoom are the same, the offset is zero because no offset is needed for those tiles to align.
+     * @param current_offset The current offset of the zoom level. If you're starting from the max zoom, this should be
+     *                       a zero vector. This is used recursively to add the zoom offsets from the previously
+     *                       applied offsets.
+     * @param max_zoom This integer is the maximum zoom out. This is static and does not change in recursive calls
+     *                 and also determines the base case. This can be any value and the result of this method will
+     *                 have a physical meaning but not necessarily a valid input to google's API. If max_zoom >=
+     *                 current_zoom then this method will return a zero offset.
+     * @param current_zoom The current zoom level to calculate the offset for. If this zoom level is equal to max_zoom
+     *                     +1 then this method will perform the calculation and return without performing recursion.
+     *                     Otherwise, the result will become equal to:
+     *                     determineZoomOffset(determineZoomOffset(current_offset, current_zoom - 1, current_zoom),
+     *                     max_zoom, current_zoom - 1)
+     *                     Such that the result will return, recursively, the zoom offset with current zoom - 1 as
+     *                     the current zoom and the current offset being the zoom offset from current_zoom - 1 and
+     *                     current zoom.
+     */
+    public Vector determineZoomOffset(Vector current_offset, int max_zoom, int current_zoom){
+        Vector offset = new Vector();
+        System.out.printf("Zooms: %d %d\n", max_zoom, current_zoom);
+        if (max_zoom < current_zoom){
+            System.out.printf("Zoom diff: %d\n", current_zoom - max_zoom);
+            if (Math.abs(current_zoom - max_zoom) == 1){
+                WorldCoordinate base_zoom = new WorldCoordinate(latlng.getX(), latlng.getY(), 256, max_zoom);
+                WorldCoordinate inner_zoom = new WorldCoordinate(latlng.getX(), latlng.getY(), 256, current_zoom);
+
+                Vector inner_bounds_extents = inner_zoom.findBounds();
+
+                // The latitude and longitude at the right and top of the tile
+                Vector inner_bounds = new Vector(
+                        latlng.getX() + inner_bounds_extents.getX(),
+                        latlng.getY() + inner_bounds_extents.getY(),
+                        0.0
+                );
+
+                Vector outer_bounds_extents = base_zoom.findBounds();
+
+                // The latitude and longitude at the right and top of the tile
+                Vector outer_bounds = new Vector(
+                        latlng.getX() + outer_bounds_extents.getX(),
+                        latlng.getY() + outer_bounds_extents.getY(),
+                        0.0
+                );
+
+
+
+                offset.setX(
+                        (outer_bounds_extents.getX() - inner_bounds_extents.getX()) + current_offset.getX()
+                );
+
+                offset.setY(
+                        (outer_bounds_extents.getY() - inner_bounds_extents.getY()) + current_offset.getY()
+                );
+            } else{
+                offset = determineZoomOffset(
+                        determineZoomOffset(current_offset, current_zoom - 1, current_zoom),
+                        max_zoom, current_zoom - 1
+                );
+            }
+        }
+        return offset;
+    }
+
+    /**
      * Get either the provided world coordinate or generated one. Guaranteed for at least one to exist
      * @return A vector containing the world coordinates, x = latitude, y = longitude,z = 0
      */
