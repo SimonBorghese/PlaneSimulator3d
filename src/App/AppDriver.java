@@ -74,7 +74,7 @@ public class AppDriver {
         initializeAndAppend(camera);
 
         // Add our world process
-        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 9, 3);
+        WorldProcess worldProcess = new WorldProcess(new WorldCoordinate(lat,lng), 12, 4);
         initializeAndAppend(worldProcess);
 
     }

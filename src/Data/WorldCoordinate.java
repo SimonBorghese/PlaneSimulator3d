@@ -198,43 +198,61 @@ public class WorldCoordinate {
         System.out.printf("Zooms: %d %d\n", max_zoom, current_zoom);
         if (max_zoom < current_zoom){
             System.out.printf("Zoom diff: %d\n", current_zoom - max_zoom);
-            if (Math.abs(current_zoom - max_zoom) == 1){
-                WorldCoordinate base_zoom = new WorldCoordinate(latlng.getX(), latlng.getY(), 256, max_zoom);
-                WorldCoordinate inner_zoom = new WorldCoordinate(latlng.getX(), latlng.getY(), 256, current_zoom);
+            //if (Math.abs(current_zoom - max_zoom) == 1){
+                WorldCoordinate high_res = new WorldCoordinate(
+                        latlng.getX(),
+                        latlng.getY(),
+                        256, current_zoom
+                );
 
-                Vector inner_bounds_extents = inner_zoom.findBounds();
+                WorldCoordinate low_res = new WorldCoordinate(
+                        latlng.getX(),
+                        latlng.getY(),
+                        256, max_zoom
+                );
 
-                // The latitude and longitude at the right and top of the tile
-                Vector inner_bounds = new Vector(
-                        latlng.getX() + inner_bounds_extents.getX(),
-                        latlng.getY() + inner_bounds_extents.getY(),
+                Vector offset_hi = new Vector(
+                        high_res.getTile().getX() % 256,
+                        high_res.getTile().getY() % 256,
                         0.0
                 );
 
-                Vector outer_bounds_extents = base_zoom.findBounds();
 
-                // The latitude and longitude at the right and top of the tile
-                Vector outer_bounds = new Vector(
-                        latlng.getX() + outer_bounds_extents.getX(),
-                        latlng.getY() + outer_bounds_extents.getY(),
+                Vector offset_lw = new Vector(
+                        low_res.getTile().getX() % 256,
+                        low_res.getTile().getY() % 256,
+                        0.0
+                );
+
+                double scale = Math.pow(2, max_zoom);
+
+                Vector offset_lw_in_hr = new Vector(
+                        offset_lw.getX()  / scale,
+                        offset_lw.getY() / scale,
+                        0.0
+                );
+
+                Vector diff = new Vector(
+                        offset_hi.getX() - offset_lw_in_hr.getX(),
+                        offset_hi.getX() - offset_lw_in_hr.getY(),
                         0.0
                 );
 
 
 
                 offset.setX(
-                        (outer_bounds_extents.getX() - inner_bounds_extents.getX()) + current_offset.getX()
+                        (diff.getX())
                 );
 
                 offset.setY(
-                        (outer_bounds_extents.getY() - inner_bounds_extents.getY()) + current_offset.getY()
+                        (diff.getY())
                 );
-            } else{
-                offset = determineZoomOffset(
-                        determineZoomOffset(current_offset, current_zoom - 1, current_zoom),
-                        max_zoom, current_zoom - 1
-                );
-            }
+            //} else{
+                //offset = offset.plus(determineZoomOffset(
+                //        offset,
+                //        max_zoom, current_zoom - 1));
+
+            //}
         }
         return offset;
     }

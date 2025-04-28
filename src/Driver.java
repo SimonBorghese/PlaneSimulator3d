@@ -4,7 +4,6 @@ import Launcher.*;
  * PlaneSimulator3d
  * This is a flight tracker/simulator created by Simon Borghese for CS 220
  * All files in src were authored entirely by Simon Borghese
- * This code will be uploaded at a later date to Github under an Open Source License.
  * @author Simon Borghese
  */
 

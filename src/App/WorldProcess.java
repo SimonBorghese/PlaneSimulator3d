@@ -90,10 +90,14 @@ public class WorldProcess implements AppProcess{
                 initial.getWorldCoordinate().getY(), 256, zoom-3);
 
 
-        //spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
+        for (int x = 0; x <= 0; x++){
+            for (int y = 0; y <= 0; y++){
+                spawnMesh(context.getDataDriver(), initial_15, new Vector(x ,y ,0), zoom);
+            }
+        }
         //spawnMesh(context.getDataDriver(), initial_14, new Vector(0,0,0), zoom-1);
         //spawnMesh(context.getDataDriver(), initial_13, new Vector(0,0,0), zoom-2);
-        spawnMesh(context.getDataDriver(), initial_15, new Vector(0,0,0), zoom);
+        //spawnMesh(context.getDataDriver(), initial_12, new Vector(0,0,0), zoom - 3);
     }
 
     /**
@@ -121,6 +125,7 @@ public class WorldProcess implements AppProcess{
                 Image img = images[index];
                 WorldGenerationThread.HeightmapMesh mesh = meshes[index];
 
+                WorldCoordinate point = thread.generateAdjacentTiles()[((mesh_res_range) * mesh_resolution) + mesh_res_range];
 
                 gDriver.pushTexture(img);
 
@@ -135,24 +140,22 @@ public class WorldProcess implements AppProcess{
                 test_mesh.configureVertexArray();
 
                 // Scale this transform and move it down by the zoom level
+
                 int zoom_offset = this.zoom - zoom;
-                int zoom_scale = (int) Math.pow(2, 3);
-                int zoom_scale2 = (int) Math.pow(2, zoom - this.zoom);
+                int zoom_scale2 = (int) Math.pow(2, 16 - zoom);
 
                 Transform transform = new Transform();
 
-                //Vector offset = initial.determineZoomOffset(new Vector(), this.zoom - 3, zoom);
 
-                //System.out.printf("Offset: %f %f\n", offset.getX(), offset.getY());
 
-                transform.getPos().setX(((thread_offset.getX() + 1 + x) - (zoom_scale * (0.2 / mesh_resolution))));
-                transform.getPos().setZ(((thread_offset.getY() + 1 + y)  - (zoom_scale * (0.2 / mesh_resolution))));
+                transform.getPos().setX((((thread_offset.getX()  + (x)))));
+                transform.getPos().setZ((((thread_offset.getY()  + (y)))));
 
-                transform.getScale().setScalar(zoom_scale*10);
+                transform.getScale().setScalar(zoom_scale2*10);
 
                 //transform.getScale().setY(((zoom_scale * 10 * 4) - (zoom_offset)) * 0.3);
 
-                transform.getPos().setY(-0.002 * zoom_offset);
+                transform.getPos().setY(-0.2);
 
                 GLTransform glTransform = new GLTransform(transform);
 
@@ -187,7 +190,7 @@ public class WorldProcess implements AppProcess{
 
         Vector initial_pos = location.getTile();
         thread.setLocation(new WorldCoordinate((int) initial_pos.getX(), (int)initial_pos.getY(), zoom),
-                new Vector(offset.getX(), offset.getY(), 0), zoom ,4);
+                new Vector(offset.getX(), offset.getY(), 0), zoom ,2);
         thread.start();
 
         horizontal_lines.put((int) offset.getY(), thread);
@@ -213,32 +216,39 @@ public class WorldProcess implements AppProcess{
             throw new IllegalStateException("No Camera in provided app process list!");
         }
 
+
         // Iterate through each zoom level, determine the offset
         //for (int z = zoom; z >= (zoom - zoom_out); z--){
-            int scale = (int) Math.pow(2, zoom );
+            int scale = (int) Math.pow(2, zoom / 2.0);
 
-            int x_offset = (int) ((cam.getGLCamera().getTransform().getPos().getX() * 4) / (scale));
-            int y_offset = (int) ((cam.getGLCamera().getTransform().getPos().getZ() * 4) / (scale));
+            int x_offset = (int) ((cam.getGLCamera().getTransform().getPos().getX() / scale));
+            int y_offset = (int) ((cam.getGLCamera().getTransform().getPos().getZ() / scale));
 
             //System.out.printf("Z: %d X: %d Y: %d\n", z, x_offset, y_offset);
 
         WorldCoordinate initial_12 = new WorldCoordinate(initial.getWorldCoordinate().getX(),
                 initial.getWorldCoordinate().getY(), 256, zoom);
 
-           // if (!coordinateThreads.containsKey(z) ||
-                    if (!coordinateThreads.get(zoom).containsKey(x_offset) ||
-                        !coordinateThreads.get(zoom).get(x_offset).containsKey(y_offset)){
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                int x_o = x_offset + x;
+                int y_o = y_offset + y;
+                if (!coordinateThreads.get(zoom).containsKey(x_o) ||
+                                !coordinateThreads.get(zoom).get(x_o).containsKey(y_o)) {
 
-                WorldCoordinate initial_wc = new WorldCoordinate(
-                        initial_12.getTile().getX() + x_offset,
-                        initial_12.getTile().getY() + y_offset,
-                        (double) zoom);
+                    WorldCoordinate initial_wc = new WorldCoordinate(
+                            initial_12.getTile().getX() + x_o,
+                            initial_12.getTile().getY() + y_o,
+                            (double) zoom);
 
 
-                spawnMesh(context.getDataDriver(), initial_wc, new Vector(x_offset,y_offset,0), zoom);
+                    spawnMesh(context.getDataDriver(), initial_wc, new Vector(x_o, y_o, 0), zoom);
+
+                }
             }
+        }
 
-        //}
+
 
         for (Map.Entry<Integer, HashMap<Integer, HashMap<Integer, WorldGenerationThread>>> zoom_layer : coordinateThreads.entrySet()) {
             for (HashMap<Integer, WorldGenerationThread> horizontal_rows : zoom_layer.getValue().values()) {
@@ -340,7 +350,7 @@ public class WorldProcess implements AppProcess{
 
             for (int i = 0; i < tiles.length; i++){
                 // Append the tile's elevation to the list
-                //queryWorldElevation(tiles[i]);
+                queryWorldElevation(tiles[i]);
 
                 try{
                     // Append the coordinate's satellite images
@@ -366,7 +376,7 @@ public class WorldProcess implements AppProcess{
          */
         private WorldCoordinate[] generateAdjacentTiles(){
             WorldCoordinate[] offsets = new WorldCoordinate[9];
-            Vector base_location = this.location.getTile();
+            Vector base_location = this.location.getTile().plus(offset);
 
             for (int y = 0; y < 3; y++){
                 for (int x = 0; x < 3; x++){
@@ -549,8 +559,8 @@ public class WorldProcess implements AppProcess{
                         double lat_offset = radius_x * Math.abs(location_bounds.getX());
                         double lng_offset = radius_y * Math.abs(location_bounds.getY());
 
-                        double latitude = world_location.getX() + lat_offset;
-                        double longitude = world_location.getY() + lng_offset;
+                        double latitude = world_location.getX() + (lat_offset);
+                        double longitude = world_location.getY() + (lng_offset);
 
 
                         // Construct the latitude and longitude

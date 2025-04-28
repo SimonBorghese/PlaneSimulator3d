@@ -106,6 +106,18 @@ public class AppCamera implements AppProcess{
                     camera.getTransform().getRotation().setX(x);
                     break;
                 }
+                case GLFW.GLFW_KEY_RIGHT:{
+                    double x =camera.getTransform().getRotation().getY();
+                    x += rotation_speed * dt;
+                    camera.getTransform().getRotation().setY(x);
+                    break;
+                }
+                case GLFW.GLFW_KEY_LEFT:{
+                    double x =camera.getTransform().getRotation().getY();
+                    x -= rotation_speed * dt;
+                    camera.getTransform().getRotation().setY(x);
+                    break;
+                }
                 default: {
                     break;
                 }
